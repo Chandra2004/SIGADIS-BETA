@@ -118,6 +118,24 @@ jobs:
           DURATION=$((END_TIME - START_TIME))
           echo "DURATION_MIN=$((DURATION / 60))m $((DURATION % 60))s" >> $GITHUB_ENV
 
+      # --- NOTIFIKASI APK DOWNLOAD ---
+      - name: 📱 Send APK Download Notification
+        if: success()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          message: |
+            📱 *[ANDROID APK READY]*
+            ------------------------------------------------
+            *App*        : `${{ github.repository }}`
+            *Version*    : `${{ github.sha }}`
+            *Status*     : APK berhasil dibuild dan dipublikasikan
+            ------------------------------------------------
+            🔽 Download APK:
+            https://dev-sigadis-beta.rf.gd/application/testing-capacitor.apk
+
       # --- NOTIFIKASI SUCCESS ---
       - name: ✅ Send Professional Success Notification
         if: success()
