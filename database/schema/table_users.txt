@@ -1,0 +1,35 @@
+
+Table users {
+  id char(36) [pk]
+
+  // Authentication
+  name varchar(150) [not null]
+  email varchar(150) [unique]
+  phone varchar(30) [not null]
+  password varchar(255) [not null]
+
+  // Personal information
+  nik varchar(20) [unique]
+  date_of_birth date
+  gender varchar(20)
+  address text
+
+  // Emergency contacts
+  midwife_phone varchar(30)
+  husband_name varchar(150)
+  husband_phone varchar(30)
+  emergency_contact_name varchar(150)
+  emergency_contact_phone varchar(30)
+
+  // Location
+  latitude decimal(10,7)
+  longitude decimal(10,7)
+
+  // Account
+  email_verified_at datetime
+  phone_verified_at datetime
+
+  created_at datetime
+  updated_at datetime
+  deleted_at datetime
+}

@@ -1,0 +1,10 @@
+{
+  "appId": "com.testingcapacitor.app",
+  "appName": "testing-capacitor",
+  "webDir": "public",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://dev-sigadis-beta.rf.gd",
+    "cleartext": false
+  }
+}

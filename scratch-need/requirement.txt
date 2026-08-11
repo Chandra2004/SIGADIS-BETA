@@ -1,0 +1,21 @@
+saya ingin membuat aplikasi yang berbasis web + apk :
+halaman apa saja yang bisa diakses
+untuk web :
+- landing page
+- register
+- reset password
+
+untuk apk :
+- splash (ini selalu muncul pertama kali aplikasi dibuka)
+- onboarding 1-3 (ini munculnya pertama kali aplikasi tersebut setelah diinstall, untuk seterusnya tidak muncul)
+- login
+- register
+- reset password
+- dashboard
+
+nah karena saya sudah punya dan sudah install :
+- tailwindcss
+- daisyUI
+- asset logonya : public\assets\images\Pose 1 — Menyambut (Onboarding_Registrasi).png
+
+disini saya ingin buatkan halaman splash untuk APK dengan ketentuan seperti ini scratch-need\splash.html untuk assets dan komponen sekiranya itu mirip seperti dependensi yang saya miliki maka ganti dengan yang saya punya, karena saya sudah punya resources\js\Pages\Welcome.vue kita buat splashnya
