@@ -94,6 +94,17 @@ jobs:
           mkdir -p database
           touch database/database.sqlite
 
+      - name: 🗂️ Prepare Laravel writable folders
+        run: |
+          mkdir -p storage/framework/sessions
+          mkdir -p storage/framework/cache
+          mkdir -p storage/framework/views
+          mkdir -p storage/logs
+          touch storage/framework/sessions/.gitkeep
+          touch storage/framework/cache/.gitkeep
+          touch storage/framework/views/.gitkeep
+          touch storage/logs/.gitkeep
+
       - name: 🧹 Cleanup
         run: |
           rm -rf node_modules tests .git .github
