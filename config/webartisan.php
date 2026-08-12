@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\ArtisanWebAuth;
+
 return [
 
     /*
@@ -50,7 +52,7 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'middleware' => ['web', \App\Http\Middleware\WebartisanAuth::class],
+    'middleware' => ['web', ArtisanWebAuth::class],
 
     /*
     |--------------------------------------------------------------------------

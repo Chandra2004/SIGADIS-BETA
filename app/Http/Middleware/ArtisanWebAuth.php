@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpFoundation\Response;
 
-class WebartisanAuth
+class ArtisanWebAuth
 {
     /**
      * Handle an incoming request.
@@ -224,3 +224,5 @@ HTML;
         return response($html, 401);
     }
 }
+
+
