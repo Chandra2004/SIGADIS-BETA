@@ -18,15 +18,14 @@ jobs:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           format: markdown
           message: |
-            ⏳ *[DEPLOYMENT IN PROGRESS]*
+            ⏳ *[SIGADIS DEPLOYMENT IN PROGRESS]*
             ------------------------------------------------
-            *Service*      : `${{ github.repository }}`
-            *Target Env*   : InfinityFree (Production)
-            *Version*      : `${{ github.sha }}`
+            *Target Env*   : InfinityFree & Android APK
+            *Branch*       : `${{ github.ref_name }}`
             *Triggered By* : @${{ github.actor }}
 
-            *Status*       : 🧱 Building Environment & FTP Sync
-            *Est. Time*    : ~2 minutes remaining
+            *Status*       : 🧱 Building Assets, APK, & FTP Sync
+            *Est. Time*    : ~3 minutes remaining
             ------------------------------------------------
             [📺 Track Live Progress](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
@@ -84,7 +83,7 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
-          cp app/build/outputs/apk/debug/app-debug.apk ../public/application/testing-capacitor.apk
+          cp app/build/outputs/apk/debug/app-debug.apk ../public/application/SIGADIS.apk
           echo "APK_PATH=$(pwd)/app/build/outputs/apk/debug/app-debug.apk" >> $GITHUB_ENV
           cd ..
           ls -l public/application
@@ -133,25 +132,7 @@ jobs:
           DURATION=$((END_TIME - START_TIME))
           echo "DURATION_MIN=$((DURATION / 60))m $((DURATION % 60))s" >> $GITHUB_ENV
 
-      # --- NOTIFIKASI APK DOWNLOAD ---
-      - name: 📱 Send APK Download Notification
-        if: success()
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          format: markdown
-          message: |
-            📱 *[ANDROID APK READY]*
-            ------------------------------------------------
-            *App*        : `${{ github.repository }}`
-            *Version*    : `${{ github.sha }}`
-            *Status*     : APK berhasil dibuild dan dipublikasikan
-            ------------------------------------------------
-            🔽 Download APK:
-            https://dev-sigadis-beta.rf.gd/application/testing-capacitor.apk
-
-      # --- NOTIFIKASI SUCCESS ---
+      # --- NOTIFIKASI SUCCESS (ALL-IN-ONE) ---
       - name: ✅ Send Professional Success Notification
         if: success()
         uses: appleboy/telegram-action@master
@@ -160,13 +141,12 @@ jobs:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           format: markdown
           message: |
-            🚀 *[PRODUCTION RELEASE] - SUCCESS*
+            🚀 *[SIGADIS DEPLOYMENT SUCCESS]*
             ------------------------------------------------
-            *App*        : `${{ github.repository }}`
             *Branch*     : `${{ github.ref_name }}`
             *Author*     : @${{ github.actor }}
-            *Status*     : Deployed to InfinityFree (FTP)
             *Duration*   : ${{ env.DURATION_MIN }}
+            *Status*     : Web & APK Deployed
 
             📝 *RELEASE CHANGELOG:*
             `${{ steps.info.outputs.commit_msg }}`
@@ -174,7 +154,10 @@ jobs:
             📂 *File Updated:*
             `${{ steps.info.outputs.changed_files }}`
             ------------------------------------------------
-            [🌐 Live App URL](http://${{ secrets.FTP_SERVER }})  [📈 View Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            🌐 *Web App*: [https://dev-sigadis-beta.rf.gd](https://dev-sigadis-beta.rf.gd)
+            📱 *Android APK*: [Download SIGADIS.apk](https://dev-sigadis-beta.rf.gd/application/SIGADIS.apk)
+            ------------------------------------------------
+            [📈 View Pipeline Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
       # --- NOTIFIKASI FAILED ---
       - name: 🚨 Send Professional Failure Notification
@@ -185,18 +168,14 @@ jobs:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           format: markdown
           message: |
-            🚨 *[PIPELINE ALERT] - BUILD FAILED*
+            🚨 *[SIGADIS PIPELINE ALERT] - BUILD FAILED*
             ------------------------------------------------
-            *Project*     : `${{ github.repository }}`
             *Branch*      : `${{ github.ref_name }}`
             *Author*      : @${{ github.actor }}
             *Duration*    : ${{ env.DURATION_MIN }}
 
-            ❌ *FAILED STAGE:* [Deployment-FTP]
-
-            Error Summary:
-            > Pipeline process terminated unexpectedly.
-            > Periksa log di GitHub untuk detail error.
+            ❌ *Status*: Pipeline process terminated unexpectedly.
+            > Periksa log di GitHub untuk melihat detail error (misal gagal di NPM build, APK, atau FTP).
 
             ------------------------------------------------
             [🔍 View Failure Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})  [🔄 Re-run Pipeline](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
