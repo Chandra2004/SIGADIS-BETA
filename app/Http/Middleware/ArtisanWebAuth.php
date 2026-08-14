@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpFoundation\Response;
 
 class ArtisanWebAuth
@@ -26,7 +27,7 @@ class ArtisanWebAuth
             $cmd = trim(strtolower($request->input('command')));
             if (in_array($cmd, ['reset', 'exit', 'quit', 'logout'])) {
                 return response()->json(['output' => 'AKSES DIKUNCI. Sesi telah dihapus.'])
-                                 ->withoutCookie('wa_tokens');
+                    ->withoutCookie('wa_tokens');
             }
         }
 
@@ -41,7 +42,7 @@ class ArtisanWebAuth
         $activeTokens = $activeTokensJson ? json_decode($activeTokensJson, true) : [];
 
         // Buat Fingerprint (IP + Browser)
-        $fingerprint = md5($request->ip() . $request->userAgent() . config('app.key'));
+        $fingerprint = md5($request->ip().$request->userAgent().config('app.key'));
 
         // Logika Validasi:
         $isValid = false;
@@ -68,19 +69,33 @@ class ArtisanWebAuth
             return $next($request);
         }
 
-        // 4. Proses Login (Jika ada input password)
+        // 4. Proses Login (Jika ada input password) — dibatasi rate limit,
+        //    ini pintu masuk ke eksekusi command server, bukan cuma login biasa.
         if ($request->has('key')) {
-            if (Hash::check($request->query('key'), $passwordHash)) {
+            $limiterKey = 'webartisan-login:'.$request->ip();
+
+            if (RateLimiter::tooManyAttempts($limiterKey, 5)) {
+                $seconds = RateLimiter::availableIn($limiterKey);
+
+                return $this->showLoginForm($request, 'Terlalu banyak percobaan, coba lagi dalam '.ceil($seconds / 60).' menit.');
+            }
+
+            if (Hash::check($request->input('key'), $passwordHash)) {
+                RateLimiter::clear($limiterKey);
+
                 $newToken = bin2hex(random_bytes(16));
                 $activeTokens[$newToken] = [
                     'time' => time(),
-                    'fp' => $fingerprint
+                    'fp' => $fingerprint,
                 ];
 
                 // Simpan token ke dalam Cookie (berlaku 60 menit)
                 $cookie = cookie('wa_tokens', json_encode($activeTokens), 60);
-                return redirect()->to(url($prefix . '?token=' . $newToken))->withCookie($cookie);
+
+                return redirect()->to(url($prefix.'?token='.$newToken))->withCookie($cookie);
             } else {
+                RateLimiter::hit($limiterKey, 900);
+
                 return $this->showLoginForm($request, 'Password Salah!');
             }
         }
@@ -92,8 +107,9 @@ class ArtisanWebAuth
     protected function showLoginForm(Request $request, $errorMessage = null): Response
     {
         $prefix = config('webartisan.route_prefix', 'webartisan');
-        $error = $errorMessage ? '<div class="error">'. $errorMessage .'</div>' : '';
+        $error = $errorMessage ? '<div class="error">'.$errorMessage.'</div>' : '';
         $token = $request->query('token') ?? $request->input('token');
+        $csrfField = '<input type="hidden" name="_token" value="'.csrf_token().'">';
 
         $html = <<<HTML
 <!DOCTYPE html>
@@ -210,7 +226,8 @@ class ArtisanWebAuth
         <h1>Webartisan</h1>
         <p class="subtitle">Masukkan password untuk mengakses terminal</p>
         {$error}
-        <form method="GET" action="/{$prefix}">
+        <form method="POST" action="/{$prefix}">
+            {$csrfField}
             <label for="password">Password</label>
             <input type="password" id="password" name="key" placeholder="••••••••" autofocus required>
             <button type="submit">Buka Akses</button>
@@ -224,5 +241,3 @@ HTML;
         return response($html, 401);
     }
 }
-
-

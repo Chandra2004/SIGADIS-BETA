@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\File;
 class AppClean extends Command
 {
     protected $signature = 'app:clean {--force : Paksa jalankan tanpa konfirmasi}';
+
     protected $description = 'Membersihkan cache, log lama, session usang, dan file temporary aman untuk aplikasi Laravel';
 
     public function handle()
@@ -23,15 +24,15 @@ class AppClean extends Command
 
         $this->comment('[2/7] Membersihkan file log lama...');
         $deletedLogs = $this->cleanOldLogs();
-        $this->info($deletedLogs . ' file log lama dihapus.');
+        $this->info($deletedLogs.' file log lama dihapus.');
 
         $this->comment('[3/7] Menghapus file temporary di storage/framework...');
         $deletedFramework = $this->cleanFrameworkArtifacts();
-        $this->info($deletedFramework . ' file framework artifact dihapus.');
+        $this->info($deletedFramework.' file framework artifact dihapus.');
 
         $this->comment('[4/7] Membersihkan session yang sudah usang...');
         $deletedSessions = $this->cleanOldSessions();
-        $this->info($deletedSessions . ' session lama dihapus.');
+        $this->info($deletedSessions.' session lama dihapus.');
 
         $this->comment('[5/7] Membersihkan folder tmp Livewire...');
         $this->cleanLivewireTmp();
@@ -39,7 +40,7 @@ class AppClean extends Command
 
         $this->comment('[6/7] Membersihkan cache temporary aman...');
         $deletedTmp = $this->cleanTmpFiles();
-        $this->info($deletedTmp . ' file tmp aman dihapus.');
+        $this->info($deletedTmp.' file tmp aman dihapus.');
 
         $this->comment('[7/7] Verifikasi folder penting...');
         $this->protectImportantFolders();
@@ -151,7 +152,7 @@ class AppClean extends Command
             $deleted++;
         }
 
-        $tmpFiles = File::glob($appDir . '/*.{tmp,cache,bak,log}', GLOB_BRACE);
+        $tmpFiles = File::glob($appDir.'/*.{tmp,cache,bak,log}', GLOB_BRACE);
         foreach ($tmpFiles as $file) {
             if (File::exists($file)) {
                 File::delete($file);
@@ -175,7 +176,7 @@ class AppClean extends Command
 
         foreach ($protected as $path) {
             if (File::exists($path)) {
-                $this->line('Aman: ' . $path);
+                $this->line('Aman: '.$path);
             }
         }
     }

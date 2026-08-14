@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\AdminUser;
+use App\Models\HealthcareWorker;
+use App\Models\PregnantUser;
 use App\Models\User;
 
 return [
@@ -42,6 +45,21 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        'pregnant' => [
+            'driver' => 'session',
+            'provider' => 'pregnant_users',
+        ],
+
+        'staff' => [
+            'driver' => 'session',
+            'provider' => 'healthcare_workers',
+        ],
+
+        'admin' => [
+            'driver' => 'session',
+            'provider' => 'admin_users',
+        ],
     ],
 
     /*
@@ -71,6 +89,21 @@ return [
         //     'driver' => 'database',
         //     'table' => 'users',
         // ],
+
+        'pregnant_users' => [
+            'driver' => 'eloquent',
+            'model' => PregnantUser::class,
+        ],
+
+        'healthcare_workers' => [
+            'driver' => 'eloquent',
+            'model' => HealthcareWorker::class,
+        ],
+
+        'admin_users' => [
+            'driver' => 'eloquent',
+            'model' => AdminUser::class,
+        ],
     ],
 
     /*

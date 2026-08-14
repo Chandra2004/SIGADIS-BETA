@@ -10,7 +10,7 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'enabled' => env('WEBARTISAN_ENABLED', true),
+    'enabled' => env('WEBARTISAN_ENABLED', false),
 
     /*
     |--------------------------------------------------------------------------
@@ -67,24 +67,46 @@ return [
     | Allowed Commands
     |--------------------------------------------------------------------------
     |
-    | Jika ini KOSONG, maka SEMUA perintah diizinkan (kecuali yang diblokir).
-    | Ini adalah cara termudah agar db:seed dan lainnya bisa jalan.
+    | Dibatasi ke perintah deploy yang aman untuk shared hosting tanpa SSH.
+    | Data sistem ini berisi data kesehatan (UU PDP) — jangan dikosongkan,
+    | daftar kosong berarti SEMUA perintah artisan diizinkan termasuk
+    | tinker (eksekusi PHP bebas) dan db:wipe/migrate:fresh (hapus data).
     |
     */
 
-    'allowed_commands' => [],
-
+    'allowed_commands' => [
+        'migrate',
+        'migrate:status',
+        'db:seed',
+        'cache:clear',
+        'config:clear',
+        'config:cache',
+        'route:clear',
+        'route:cache',
+        'view:clear',
+        'queue:restart',
+        'storage:link',
+        'optimize:clear',
+    ],
 
     /*
     |--------------------------------------------------------------------------
     | Blocked Commands
     |--------------------------------------------------------------------------
     |
-    | Kosongkan daftar ini agar Anda bebas menjalankan perintah apa pun.
+    | Lapisan kedua (defense in depth) kalau allowed_commands di atas
+    | sengaja/tidak sengaja dikosongkan.
     |
     */
 
-    'blocked_commands' => [],
+    'blocked_commands' => [
+        'tinker',
+        'db:wipe',
+        'migrate:fresh',
+        'migrate:reset',
+        'migrate:rollback',
+        'key:generate',
+    ],
 
     /*
     |--------------------------------------------------------------------------

@@ -3,13 +3,14 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="SIGADIS - Sistem Informasi GADIS, platform modern untuk pengelolaan data dan layanan digital yang efisien dan user-friendly.">
 
         <!-- Title dinamis dari Inertia -->
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
-        <!-- Fonts (Opsional, bawaan standar Laravel) -->
+        <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:400,500,600,700&display=swap" rel="stylesheet" />
 
         <!-- Scripts -->
         @routes

@@ -7,6 +7,41 @@
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Brand colors — Design.md §2.1 */
+    --color-brand-navy-900: #2c4a6e;
+    --color-brand-navy-700: #3d6086;
+    --color-brand-navy-100: #dce6ee;
+    --color-brand-pink-500: #f3aec0;
+    --color-brand-pink-200: #fce1e8;
+    --color-brand-pink-50: #fdf3f6;
+    --color-brand-cream-100: #f7efe4;
+
+    /* Warna status risiko — Design.md §2.2, WAJIB identik mobile & desktop */
+    --color-risk-low: #4c9a6e;
+    --color-risk-low-bg: #e6f4ec;
+    --color-risk-medium: #e0a030;
+    --color-risk-medium-bg: #fbf0dc;
+    --color-risk-high: #d64550;
+    --color-risk-high-bg: #fbe4e5;
+
+    /* Warna darurat — Design.md §2.3, prioritas visual tertinggi */
+    --color-emergency: #c81e2c;
+    --color-emergency-pulse: #ff4a57;
+    --color-emergency-alert: #c81e2c;
+    --color-emergency-alert-pulse: #ff4a57;
+    --color-emergency-pending-bg: #fff5f5;
+    --color-emergency-handled: #8c8c99;
+
+    /* Aksen & fungsional — Design.md §2.4 */
+    --color-accent-amber: #f0a63e;
+    --color-error-form: #e0703d;
+    --color-info: #3d6086;
+}
+
+/* Flows.md §29.2: ukuran teks "Besar" — skala rem root, Tailwind rem-based jadi ikut membesar tanpa sentuh tiap komponen. */
+html[data-text-size='besar'] {
+    font-size: 112.5%;
 }

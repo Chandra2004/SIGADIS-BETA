@@ -13,6 +13,8 @@
 /.zed
 /auth.json
 /node_modules
+/.agents
+/.claude
 /public/build
 /public/hot
 /public/storage
@@ -23,3 +25,7 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 environment.md
+/requirement_and_request/
+/scratch-need/
+*.mp4
+*.zip

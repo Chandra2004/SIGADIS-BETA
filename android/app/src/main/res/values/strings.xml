@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">testing-capacitor</string>
-    <string name="title_activity_main">testing-capacitor</string>
-    <string name="package_name">com.testingcapacitor.app</string>
-    <string name="custom_url_scheme">com.testingcapacitor.app</string>
+    <string name="app_name">SIGADIS</string>
+    <string name="title_activity_main">SIGADIS</string>
+    <string name="package_name">com.sigadis.app</string>
+    <string name="custom_url_scheme">com.sigadis.app</string>
 </resources>

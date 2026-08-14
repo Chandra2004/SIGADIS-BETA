@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -37,7 +38,18 @@ class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
-            //
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'info' => fn () => $request->session()->get('info'),
+            ],
+            // Badge lonceng notifikasi (desain Figma) — dipakai sisi ibu hamil & bidan/kader.
+            'unreadNotificationCount' => function () {
+                $notifiable = Auth::guard('pregnant')->user() ?? Auth::guard('staff')->user();
+
+                return $notifiable?->unreadNotifications()->count() ?? 0;
+            },
+            // Flows.md §29.2.2: preferensi ukuran teks berlaku di seluruh layar sejak saat itu.
+            'textSize' => fn () => Auth::guard('pregnant')->user()?->text_size ?? 'normal',
         ];
     }
 }

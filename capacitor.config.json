@@ -1,10 +1,10 @@
 {
-  "appId": "com.testingcapacitor.app",
-  "appName": "testing-capacitor",
+  "appId": "com.sigadis.app",
+  "appName": "SIGADIS",
   "webDir": "public",
   "bundledWebRuntime": false,
   "server": {
-    "url": "https://dev-sigadis-beta.rf.gd",
-    "cleartext": false
+    "url": "http://192.168.100.10:8000",
+    "cleartext": true
   }
 }
