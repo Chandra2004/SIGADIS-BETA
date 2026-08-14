@@ -110,7 +110,7 @@ jobs:
 
       - name: 🧹 Cleanup
         run: |
-          rm -rf node_modules tests .git .github android
+          rm -rf node_modules tests .git .github android DUMP logo.png
 
       - name: 🚀 Sync Files via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
