@@ -74,20 +74,7 @@ return [
     |
     */
 
-    'allowed_commands' => [
-        'migrate',
-        'migrate:status',
-        'db:seed',
-        'cache:clear',
-        'config:clear',
-        'config:cache',
-        'route:clear',
-        'route:cache',
-        'view:clear',
-        'queue:restart',
-        'storage:link',
-        'optimize:clear',
-    ],
+    'allowed_commands' => [],
 
     /*
     |--------------------------------------------------------------------------
@@ -99,14 +86,7 @@ return [
     |
     */
 
-    'blocked_commands' => [
-        'tinker',
-        'db:wipe',
-        'migrate:fresh',
-        'migrate:reset',
-        'migrate:rollback',
-        'key:generate',
-    ],
+    'blocked_commands' => [],
 
     /*
     |--------------------------------------------------------------------------
