@@ -110,7 +110,7 @@ jobs:
 
       - name: 🧹 Cleanup
         run: |
-          rm -rf node_modules tests .git .github
+          rm -rf node_modules tests .git .github android
 
       - name: 🚀 Sync Files via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
@@ -124,6 +124,7 @@ jobs:
             **/.git*/**
             **/node_modules/**
             **/tests/**
+            **/android/**
 
       - name: ⏱️ Calculate Duration
         if: always()
