@@ -73,6 +73,10 @@ jobs:
           npm install --legacy-peer-deps
           npm run build
 
+      - name: ⚙️ Update capacitor.config.json for Production
+        run: |
+          jq '.server.url="https://dev-sigadis-beta.rf.gd" | .server.cleartext=false' capacitor.config.json > tmp.json && mv tmp.json capacitor.config.json
+
       - name: 📱 Build APK and publish to public/application
         run: |
           mkdir -p public/application

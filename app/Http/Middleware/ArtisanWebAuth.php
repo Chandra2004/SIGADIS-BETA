@@ -226,7 +226,7 @@ class ArtisanWebAuth
         <h1>Webartisan</h1>
         <p class="subtitle">Masukkan password untuk mengakses terminal</p>
         {$error}
-        <form method="POST" action="/{$prefix}">
+        <form method="POST" action="/{$prefix}/run">
             {$csrfField}
             <label for="password">Password</label>
             <input type="password" id="password" name="key" placeholder="••••••••" autofocus required>

@@ -6,6 +6,7 @@
         <meta name="description" content="SIGADIS - Sistem Informasi GADIS, platform modern untuk pengelolaan data dan layanan digital yang efisien dan user-friendly.">
 
         <!-- Title dinamis dari Inertia -->
+        <link rel="shortcut icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
         <!-- Fonts -->
