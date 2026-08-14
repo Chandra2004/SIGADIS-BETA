@@ -15,14 +15,19 @@ class AppClean extends Command
     public function handle()
     {
         $this->info('==================================================');
-        $this->info('      LARAVEL SAFE CLEANUP');
+        $this->info('      LARAVEL DEEP CLEANUP');
         $this->info('==================================================');
 
-        $this->comment('[1/7] Membersihkan cache Laravel...');
+        $this->comment('[1/7] Membersihkan seluruh cache Laravel...');
+        Artisan::call('cache:clear');
+        Artisan::call('route:clear');
+        Artisan::call('config:clear');
+        Artisan::call('view:clear');
+        Artisan::call('clear-compiled');
         Artisan::call('optimize:clear');
-        $this->info('Cache Laravel dibersihkan.');
+        $this->info('Seluruh Cache (Route, Config, View, Compiled) dibersihkan.');
 
-        $this->comment('[2/7] Membersihkan file log lama...');
+        $this->comment('[2/7] Membersihkan semua file log...');
         $deletedLogs = $this->cleanOldLogs();
         $this->info($deletedLogs.' file log lama dihapus.');
 
@@ -59,10 +64,8 @@ class AppClean extends Command
         $logFiles = File::glob(storage_path('logs/*.log'));
 
         foreach ($logFiles as $file) {
-            if (filemtime($file) < (time() - (7 * 24 * 60 * 60))) {
-                File::delete($file);
-                $deleted++;
-            }
+            File::delete($file);
+            $deleted++;
         }
 
         return $deleted;
@@ -74,6 +77,7 @@ class AppClean extends Command
         $paths = [
             storage_path('framework/cache'),
             storage_path('framework/views'),
+            storage_path('framework/testing'),
         ];
 
         foreach ($paths as $path) {
@@ -83,6 +87,9 @@ class AppClean extends Command
 
             $files = File::allFiles($path);
             foreach ($files as $file) {
+                if (in_array($file->getFilename(), ['.gitignore', '.gitkeep'])) {
+                    continue;
+                }
                 File::delete($file->getPathname());
                 $deleted++;
             }
@@ -102,10 +109,11 @@ class AppClean extends Command
 
         $files = File::files($sessionDir);
         foreach ($files as $file) {
-            if (filemtime($file->getPathname()) < (time() - (24 * 60 * 60))) {
-                File::delete($file->getPathname());
-                $deleted++;
+            if (in_array($file->getFilename(), ['.gitignore', '.gitkeep'])) {
+                continue;
             }
+            File::delete($file->getPathname());
+            $deleted++;
         }
 
         return $deleted;
