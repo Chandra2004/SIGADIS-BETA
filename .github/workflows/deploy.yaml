@@ -53,6 +53,26 @@ jobs:
       - name: 📦 Install PHP Dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
 
+      - name: ⚙️ Prepare Environment
+        env:
+          PROD_EXTRAS: ${{ secrets.ENV_PROD_EXTRAS }}
+        run: |
+          echo "$PROD_EXTRAS" >> .env
+          php artisan key:generate --force
+          mkdir -p database
+          touch database/database.sqlite
+
+      - name: 🗂️ Prepare Laravel writable folders
+        run: |
+          mkdir -p storage/framework/sessions
+          mkdir -p storage/framework/cache
+          mkdir -p storage/framework/views
+          mkdir -p storage/logs
+          touch storage/framework/sessions/.gitkeep
+          touch storage/framework/cache/.gitkeep
+          touch storage/framework/views/.gitkeep
+          touch storage/logs/.gitkeep
+
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -88,25 +108,6 @@ jobs:
           cd ..
           ls -l public/application
 
-      - name: ⚙️ Prepare Environment
-        env:
-          PROD_EXTRAS: ${{ secrets.ENV_PROD_EXTRAS }}
-        run: |
-          echo "$PROD_EXTRAS" >> .env
-          php artisan key:generate --force
-          mkdir -p database
-          touch database/database.sqlite
-
-      - name: 🗂️ Prepare Laravel writable folders
-        run: |
-          mkdir -p storage/framework/sessions
-          mkdir -p storage/framework/cache
-          mkdir -p storage/framework/views
-          mkdir -p storage/logs
-          touch storage/framework/sessions/.gitkeep
-          touch storage/framework/cache/.gitkeep
-          touch storage/framework/views/.gitkeep
-          touch storage/logs/.gitkeep
 
       - name: 🧹 Cleanup
         run: |
