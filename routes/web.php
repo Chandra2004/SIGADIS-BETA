@@ -1,7 +1,50 @@
 <?php
-    require_once __DIR__ . '/web-new.php';
-// use Illuminate\Support\Facades\Route;
-// use Inertia\Inertia;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+
+Route::get('/', function () {
+    return Inertia::render('Landing/Home');
+})->name('landing.home');
+
+Route::get('/tentang', function () {
+    return Inertia::render('Landing/About');
+})->name('landing.about');
+
+Route::get('/fitur', function () {
+    return Inertia::render('Landing/Features');
+})->name('landing.features');
+
+Route::get('/cara-kerja', function () {
+    return Inertia::render('Landing/HowItWorks');
+})->name('landing.how-it-works');
+
+Route::get('/faq', function () {
+    return Inertia::render('Landing/Faq');
+})->name('landing.faq');
+
+Route::get('/download-apk', function () {
+    return Inertia::render('Landing/DownloadApk');
+})->name('landing.download-apk');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // // Route::get('/', function () {
 // //     return Inertia::render('Landing/Home');
