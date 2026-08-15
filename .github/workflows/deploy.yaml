@@ -133,7 +133,7 @@ jobs:
 
       - name: 🧹 Cleanup
         run: |
-          rm -rf node_modules tests .git .github android DUMP logo.png
+          rm -rf node_modules tests .git .github android DUMP logo.png public/application
 
       - name: 🚀 Sync Files via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
@@ -148,11 +148,7 @@ jobs:
             **/node_modules/**
             **/tests/**
             **/android/**
-
-      - name: 📲 Upload & Overwrite SIGADIS.apk directly to Server via FTP
-        run: |
-          echo "Uploading SIGADIS.apk directly to server /dev-sigadis-beta.rf.gd/htdocs/public/application/SIGADIS.apk..."
-          curl --ftp-create-dirs -T public/application/SIGADIS.apk ftp://${{ secrets.FTP_SERVER }}/dev-sigadis-beta.rf.gd/htdocs/public/application/SIGADIS.apk --user ${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}
+            **/public/application/**
 
       - name: ⏱️ Calculate Duration
         if: always()
@@ -184,7 +180,7 @@ jobs:
             `${{ steps.info.outputs.changed_files }}`
             ------------------------------------------------
             🌐 *Web App*: [https://dev-sigadis-beta.rf.gd](https://dev-sigadis-beta.rf.gd)
-            📱 *Android APK*: [Download SIGADIS.apk](https://dev-sigadis-beta.rf.gd/application/SIGADIS.apk)
+            📱 *Android APK*: [Download SIGADIS.apk](https://github.com/Chandra2004/SIGADIS-BETA/releases/latest/download/SIGADIS.apk)
             ------------------------------------------------
             [📈 View Pipeline Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 

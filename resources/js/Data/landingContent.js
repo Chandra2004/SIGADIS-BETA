@@ -102,4 +102,4 @@ export const faqs = [
     { question: 'Bagaimana cara mendapatkan aplikasi SIGADIS?', answer: 'Pengguna dapat mengunduh aplikasi melalui tombol download yang tersedia pada website.' },
 ];
 
-export const APK_URL = 'https://dev-sigadis-beta.rf.gd/application/SIGADIS.apk';
+export const APK_URL = 'https://github.com/Chandra2004/SIGADIS-BETA/releases/latest/download/SIGADIS.apk';

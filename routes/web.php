@@ -26,6 +26,10 @@ Route::get('/download-apk', function () {
     return Inertia::render('Landing/DownloadApk');
 })->name('landing.download-apk');
 
+Route::get('/application/SIGADIS.apk', function () {
+    return redirect('https://github.com/Chandra2004/SIGADIS-BETA/releases/latest/download/SIGADIS.apk');
+});
+
 
 
 
