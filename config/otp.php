@@ -24,7 +24,22 @@ return [
 
     'rate_limit_per_10_minutes' => 3,
 
-    'gateway' => env('OTP_GATEWAY', 'log'), // 'log' | 'whatsapp'
+    /*
+    |--------------------------------------------------------------------------
+    | OTP Gateway Status (Testing vs Real WhatsApp)
+    |--------------------------------------------------------------------------
+    | true  : Kirim pesan asli ke WhatsApp (via wwebjs / Meta Cloud API)
+    | false : Mode simulasi / dev (OTP tidak dikirim ke WA, kode OTP
+    |         ditampilkan langsung di layar UI web di atas kotak input OTP)
+    |
+    */
+    'status' => filter_var(env('OTP_GATEWAY_STATUS', true), FILTER_VALIDATE_BOOLEAN),
+
+    'gateway' => env('OTP_GATEWAY', 'log'), // 'log' | 'wwebjs' | 'whatsapp'
+
+    'wwebjs' => [
+        'url' => env('WWEBJS_URL', 'http://127.0.0.1:3000'),
+    ],
 
     'whatsapp' => [
         'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),

@@ -10,6 +10,7 @@ use App\Services\OtpService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -31,7 +32,20 @@ class PregnantAuthController extends Controller
      */
     public function sendOtp(SendOtpRequest $request): RedirectResponse
     {
+        Auth::guard('pregnant')->logout();
+        Auth::guard('staff')->logout();
+
         $phone = $request->validated('phone_number');
+        $fullName = $request->input('full_name');
+        $password = $request->input('password');
+
+        if (! empty($fullName) || ! empty($password)) {
+            $request->session()->put("reg_data_{$phone}", [
+                'full_name' => $fullName,
+                'password_hash' => ! empty($password) ? Hash::make($password) : null,
+            ]);
+        }
+
         $limiterKey = "otp-send:{$phone}";
 
         if (RateLimiter::tooManyAttempts($limiterKey, config('otp.rate_limit_per_10_minutes'))) {
@@ -75,20 +89,37 @@ class PregnantAuthController extends Controller
             return back()->withErrors(['otp_code' => $this->otpErrorMessage($result)]);
         }
 
+        $regData = $request->session()->get("reg_data_{$data['phone_number']}");
         $user = PregnantUser::firstOrNew(['phone_number' => $data['phone_number']]);
         $isNewAccount = ! $user->exists;
 
-        if ($isNewAccount) {
+        if (! empty($regData['full_name'])) {
+            $user->full_name = $regData['full_name'];
+        } elseif ($isNewAccount && empty($user->full_name)) {
             $user->full_name = '';
+        }
+
+        if (! empty($regData['password_hash'])) {
+            $user->password_hash = $regData['password_hash'];
+        } elseif ($isNewAccount && empty($user->password_hash)) {
+            $user->password_hash = Hash::make('password123');
         }
 
         $user->otp_verified_at = now();
         $user->save();
 
+        $request->session()->forget("reg_data_{$data['phone_number']}");
+
+        // Jika pendaftaran via form web (ada data registrasi stashed di session),
+        // arahkan ke halaman Login dengan notifikasi sukses sesuai instruksi alur
+        if (! empty($regData)) {
+            return redirect()->route('auth.staff.login.show')->with('status', 'Pendaftaran akun Ibu Hamil berhasil! Silakan masuk menggunakan nomor WhatsApp dan kata sandi Anda.');
+        }
+
         Auth::guard('pregnant')->login($user, remember: true);
         $request->session()->regenerate();
 
-        if ($isNewAccount || blank($user->full_name)) {
+        if ($isNewAccount && blank($user->full_name)) {
             return redirect()->route('auth.pregnant.name.show');
         }
 
@@ -116,6 +147,7 @@ class PregnantAuthController extends Controller
             'full_name' => ['required', 'string', 'max:255'],
         ]);
 
+        /** @var \App\Models\PregnantUser $user */
         $user = Auth::guard('pregnant')->user();
         $user->update(['full_name' => $data['full_name']]);
 

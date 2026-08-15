@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('phone_number', 20)->unique();
             $table->string('full_name');
+            $table->string('password_hash');
             $table->timestamp('otp_verified_at')->nullable();
             $table->rememberToken();
             $table->timestamps();

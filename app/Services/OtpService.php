@@ -47,20 +47,25 @@ class OtpService
         Cache::put($this->requestId($phoneNumber), $requestId, $ttl);
         Cache::forget($this->attemptsKey($phoneNumber));
 
-        try {
-            $this->gateway->send($phoneNumber, $code);
-        } catch (RuntimeException $e) {
-            Log::error("[OTP] Gagal kirim ke {$phoneNumber}: {$e->getMessage()}");
+        $isLiveGateway = (bool) config('otp.status', true) && config('otp.gateway') !== 'log';
 
-            throw $e;
+        if ($isLiveGateway) {
+            try {
+                $this->gateway->send($phoneNumber, $code);
+            } catch (RuntimeException $e) {
+                Log::error("[OTP] Gagal kirim ke {$phoneNumber}: {$e->getMessage()}");
+
+                throw $e;
+            }
+        } else {
+            Log::info("[OTP Mock Mode] Kode OTP untuk {$phoneNumber} adalah: {$code}");
         }
 
         return [
             'otp_request_id' => $requestId,
             'expires_in_minutes' => config('otp.expires_in_minutes'),
-            // Hanya diisi saat gateway 'log' (lokal/testing), supaya alur bisa
-            // diuji end-to-end tanpa WhatsApp beneran. Null begitu gateway=whatsapp.
-            'debug_code' => config('otp.gateway') === 'log' ? $code : null,
+            // Jika OTP_GATEWAY_STATUS=false atau gateway=log, kembalikan debug_code ke UI
+            'debug_code' => ! $isLiveGateway ? $code : null,
         ];
     }
 

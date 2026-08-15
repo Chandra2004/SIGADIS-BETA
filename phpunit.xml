@@ -32,5 +32,8 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="WEBARTISAN_ENABLED" value="false"/>
+        <env name="OTP_GATEWAY" value="log"/>
+        <env name="OTP_GATEWAY_STATUS" value="false"/>
     </php>
 </phpunit>

@@ -10,7 +10,7 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'enabled' => env('WEBARTISAN_ENABLED', false),
+    'enabled' => filter_var(env('WEBARTISAN_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
 
     /*
     |--------------------------------------------------------------------------

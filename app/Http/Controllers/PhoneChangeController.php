@@ -78,6 +78,10 @@ class PhoneChangeController extends Controller
     {
         abort_unless($request->session()->get('phone_change_old_verified'), 403, 'Verifikasi nomor lama dulu.');
 
+        if ($request->has('new_phone_number')) {
+            $request->merge(['new_phone_number' => $this->normalizePhone($request->input('new_phone_number'))]);
+        }
+
         $data = $request->validate(['new_phone_number' => ['required', 'string', 'regex:'.self::PHONE_REGEX]]);
         $user = Auth::guard('pregnant')->user();
 
@@ -106,6 +110,10 @@ class PhoneChangeController extends Controller
     {
         abort_unless($request->session()->get('phone_change_old_verified'), 403, 'Verifikasi nomor lama dulu.');
 
+        if ($request->has('new_phone_number')) {
+            $request->merge(['new_phone_number' => $this->normalizePhone($request->input('new_phone_number'))]);
+        }
+
         $data = $request->validate([
             'new_phone_number' => ['required', 'string', 'regex:'.self::PHONE_REGEX],
             'otp_request_id' => ['required', 'string'],
@@ -122,10 +130,23 @@ class PhoneChangeController extends Controller
             return back()->withErrors(['new_phone_number' => 'Nomor ini sudah digunakan akun lain.']);
         }
 
+        /** @var PregnantUser $user */
         $user = Auth::guard('pregnant')->user();
         $user->update(['phone_number' => $data['new_phone_number']]);
         $request->session()->forget('phone_change_old_verified');
 
         return redirect()->route('kehamilan.beranda')->with('success', 'Nomor HP berhasil diganti.');
+    }
+
+    protected function normalizePhone(string $phone): string
+    {
+        $clean = preg_replace('/\D+/', '', $phone);
+        if (str_starts_with($clean, '62')) {
+            return '0' . substr($clean, 2);
+        }
+        if (str_starts_with($clean, '8')) {
+            return '0' . $clean;
+        }
+        return $clean;
     }
 }

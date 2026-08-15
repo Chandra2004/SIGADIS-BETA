@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Http;
 it('sends the otp as a WhatsApp Cloud API template message when the gateway is whatsapp', function () {
     config([
         'otp.gateway' => 'whatsapp',
+        'otp.status' => true,
         'otp.whatsapp.phone_number_id' => '1234567890',
         'otp.whatsapp.access_token' => 'test-token',
         'otp.whatsapp.template_name' => 'otp_verification',

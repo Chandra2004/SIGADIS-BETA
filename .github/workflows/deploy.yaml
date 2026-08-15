@@ -100,8 +100,8 @@ jobs:
 
       - name: 📱 Build APK and publish to public/application
         run: |
+          npm run assets:generate
           mkdir -p public/application
-          npx cap sync android
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
@@ -130,10 +130,9 @@ jobs:
           path: public/application/SIGADIS.apk
           retention-days: 14
 
-
       - name: 🧹 Cleanup
         run: |
-          rm -rf node_modules tests .git .github android DUMP logo.png public/application
+          rm -rf node_modules tests .git .github android DUMP logo.png public/application assets
 
       - name: 🚀 Sync Files via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5

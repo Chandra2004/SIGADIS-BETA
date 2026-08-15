@@ -19,6 +19,10 @@ class ArtisanWebAuth
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if (! config('webartisan.enabled', false)) {
+            abort(404);
+        }
+
         $passwordHash = config('webartisan.password');
         $prefix = config('webartisan.route_prefix', 'webartisan');
 
