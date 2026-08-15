@@ -20,7 +20,9 @@ createInertiaApp({
 
     resolve: (name) => resolvePageComponent(
         `./Pages/${name}.vue`,
-        import.meta.glob('./Pages/**/*.vue')
+        // eager: true → semua halaman Vue dibundle jadi 1 file (tidak lazy-load)
+        // Fix untuk InfinityFree: dynamic import chunks gagal dimuat
+        import.meta.glob('./Pages/**/*.vue', { eager: true })
     ),
 
     setup({ el, App, props, plugin }) {
