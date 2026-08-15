@@ -10,6 +10,7 @@
 /.nova
 /.phpunit.cache
 /.vscode
+/.requirements
 /.zed
 /auth.json
 /node_modules
@@ -31,3 +32,5 @@ environment.md
 *.zip
 /DUMP/
 /reqirement_and_request/
+/.wwebjs_auth/
+/.wwebjs_cache/

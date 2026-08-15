@@ -50,6 +50,14 @@ class HandleInertiaRequests extends Middleware
             },
             // Flows.md §29.2.2: preferensi ukuran teks berlaku di seluruh layar sejak saat itu.
             'textSize' => fn () => Auth::guard('pregnant')->user()?->text_size ?? 'normal',
+            // Matriks Pembedaan Platform (Web vs Mobile/Capacitor)
+            'isMobileApp' => fn () => (
+                $request->header('X-Is-Native') === '1'
+                || in_array($request->header('X-Capacitor-Platform'), ['android', 'ios'])
+                || str_contains($request->userAgent() ?? '', 'Capacitor')
+                || str_contains($request->userAgent() ?? '', 'wv') // Android WebView
+            ),
+            'platform' => fn () => $request->header('X-Capacitor-Platform', 'web'),
         ];
     }
 }

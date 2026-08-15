@@ -23,13 +23,14 @@ class StaffAuthController extends Controller
 {
     public function showLoginForm(): Response
     {
-        return Inertia::render('Desktop/Login');
+        return Inertia::render('Auth/Login');
     }
 
     public function login(StaffLoginRequest $request): RedirectResponse
     {
         $data = $request->validated();
-        $limiterKey = 'staff-login:'.$data['phone_number'];
+        $rawIdentifier = trim($data['identifier'] ?? $data['phone_number'] ?? '');
+        $limiterKey = 'staff-login:'.$rawIdentifier;
 
         if (RateLimiter::tooManyAttempts($limiterKey, 5)) {
             $seconds = RateLimiter::availableIn($limiterKey);
@@ -37,29 +38,75 @@ class StaffAuthController extends Controller
             return back()->withErrors(['password' => 'Terlalu banyak percobaan salah, coba lagi dalam '.ceil($seconds / 60).' menit.']);
         }
 
-        $worker = HealthcareWorker::where('phone_number', $data['phone_number'])->first();
+        // 1. Cek AdminUser jika identifier berupa email
+        if (str_contains($rawIdentifier, '@')) {
+            $admin = \App\Models\AdminUser::where('email', $rawIdentifier)->first();
+            if ($admin && password_verify($data['password'], $admin->password_hash)) {
+                RateLimiter::clear($limiterKey);
+                Auth::guard('admin')->login($admin, remember: (bool) $request->boolean('remember', true));
+                $request->session()->regenerate();
 
-        if (! $worker || ! password_verify($data['password'], $worker->password_hash)) {
-            RateLimiter::hit($limiterKey, 900);
-
-            return back()->withErrors(['password' => 'Nomor HP atau password salah.']);
+                return redirect()->route('admin.verifikasi.index');
+            }
         }
 
-        RateLimiter::clear($limiterKey);
-        Auth::guard('staff')->login($worker, remember: true);
-        $request->session()->regenerate();
+        // Normalisasi nomor HP jika input berupa angka (8xxx -> 08xxx, 628xxx -> 08xxx)
+        $cleanedPhone = preg_replace('/\D+/', '', $rawIdentifier);
+        $normalizedPhone = null;
+        if (! empty($cleanedPhone)) {
+            if (str_starts_with($cleanedPhone, '62')) {
+                $normalizedPhone = '0' . substr($cleanedPhone, 2);
+            } elseif (str_starts_with($cleanedPhone, '8')) {
+                $normalizedPhone = '0' . $cleanedPhone;
+            } else {
+                $normalizedPhone = $cleanedPhone;
+            }
+        }
 
-        if ($worker->status === 'pending') {
+        // 2. Cari di HealthcareWorker (Bidan & Kader via Phone / STR / SK)
+        $worker = HealthcareWorker::where('phone_number', $rawIdentifier)
+            ->when($normalizedPhone, fn ($query) => $query->orWhere('phone_number', $normalizedPhone))
+            ->orWhere('str_number', $rawIdentifier)
+            ->orWhere('appointment_letter_ref', $rawIdentifier)
+            ->first();
+
+        if ($worker && password_verify($data['password'], $worker->password_hash)) {
+            RateLimiter::clear($limiterKey);
+
+            if ($worker->status === 'rejected') {
+                return back()->withErrors(['password' => 'Akun Anda ditolak verifikasi admin. Hubungi puskesmas/dinkes wilayah.']);
+            }
+
+            Auth::guard('staff')->login($worker, remember: (bool) $request->boolean('remember', true));
+            $request->session()->regenerate();
+
+            if ($worker->status === 'pending') {
+                return redirect()->route('auth.staff.pending');
+            }
+
+            if (\Illuminate\Support\Facades\Route::has('bidan.dashboard')) {
+                return redirect()->route('bidan.dashboard');
+            }
+
             return redirect()->route('auth.staff.pending');
         }
 
-        if ($worker->status === 'rejected') {
-            Auth::guard('staff')->logout();
+        // 3. Cari di PregnantUser (Ibu Hamil via Phone)
+        $pregnantUser = \App\Models\PregnantUser::where('phone_number', $rawIdentifier)
+            ->when($normalizedPhone, fn ($query) => $query->orWhere('phone_number', $normalizedPhone))
+            ->first();
 
-            return back()->withErrors(['password' => 'Akun Anda ditolak verifikasi admin. Hubungi puskesmas/dinkes wilayah.']);
+        if ($pregnantUser && password_verify($data['password'], $pregnantUser->password_hash)) {
+            RateLimiter::clear($limiterKey);
+            Auth::guard('pregnant')->login($pregnantUser, remember: (bool) $request->boolean('remember', true));
+            $request->session()->regenerate();
+
+            return redirect()->route('kehamilan.beranda');
         }
 
-        return redirect()->route('bidan.dashboard');
+        RateLimiter::hit($limiterKey, 900);
+
+        return back()->withErrors(['password' => 'Nomor Handphone / STR / Email atau kata sandi salah.']);
     }
 
     /**
@@ -68,7 +115,7 @@ class StaffAuthController extends Controller
      */
     public function showRegisterForm(): Response
     {
-        return Inertia::render('Desktop/Register');
+        return Inertia::render('Auth/Register');
     }
 
     public function register(RegisterStaffRequest $request): RedirectResponse
@@ -82,7 +129,7 @@ class StaffAuthController extends Controller
             'role' => $data['role'],
             'str_number' => $data['str_number'] ?? null,
             'appointment_letter_ref' => $data['appointment_letter_ref'] ?? null,
-            'region_code' => $data['region_code'],
+            'region_code' => $data['region_code'] ?? '33.08.05.2009',
         ]);
 
         Auth::guard('staff')->login($worker);

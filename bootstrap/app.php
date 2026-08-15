@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsurePlatform;
 use App\Http\Middleware\EnsureStaffVerified;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -22,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'staff.verified' => EnsureStaffVerified::class,
+            'platform' => EnsurePlatform::class,
         ]);
 
         $middleware->redirectGuestsTo(function ($request) {

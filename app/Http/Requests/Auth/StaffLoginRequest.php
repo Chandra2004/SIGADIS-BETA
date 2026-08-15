@@ -14,7 +14,8 @@ class StaffLoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'phone_number' => ['required', 'string'],
+            'identifier' => ['required_without:phone_number', 'nullable', 'string'],
+            'phone_number' => ['required_without:identifier', 'nullable', 'string'],
             'password' => ['required', 'string'],
         ];
     }

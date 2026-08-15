@@ -16,6 +16,7 @@ class PregnantUser extends Authenticatable
     protected $fillable = [
         'phone_number',
         'full_name',
+        'password_hash',
         'profile_photo_path',
         'otp_verified_at',
         'text_size',
@@ -25,7 +26,14 @@ class PregnantUser extends Authenticatable
         'share_data_with_midwife_enabled',
     ];
 
-    protected $hidden = [];
+    protected $hidden = [
+        'password_hash',
+    ];
+
+    public function getAuthPassword(): string
+    {
+        return $this->password_hash ?? '';
+    }
 
     protected function casts(): array
     {

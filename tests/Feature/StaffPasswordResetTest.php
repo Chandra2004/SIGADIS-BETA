@@ -35,10 +35,76 @@ it('lets a worker reset their password via WhatsApp OTP end to end', function ()
     $this->post(route('auth.staff.password-reset.store'), [
         'password' => 'password-baru-123',
         'password_confirmation' => 'password-baru-123',
-    ])->assertRedirect(route('bidan.dashboard'));
+    ])->assertRedirect(route('auth.staff.login.show'))
+      ->assertSessionHas('status');
 
     expect(password_verify('password-baru-123', $worker->fresh()->password_hash))->toBeTrue();
-    $this->assertAuthenticatedAs($worker->fresh(), 'staff');
+
+    // Verify worker can login with the new password
+    $this->post(route('auth.staff.login'), [
+        'identifier' => '081211112222',
+        'password' => 'password-baru-123',
+    ])->assertRedirect(route('bidan.dashboard'));
+});
+
+it('lets a pregnant user reset their password via WhatsApp OTP end to end', function () {
+    $pregnantUser = \App\Models\PregnantUser::factory()->create(['phone_number' => '085712345678']);
+
+    $this->post(route('auth.staff.password-reset.send'), ['phone_number' => '085712345678'])
+        ->assertRedirect(route('auth.staff.password-reset.verify.show', ['phone' => '085712345678']));
+
+    $otp = staffOtpFor('085712345678');
+    expect($otp['code'])->not->toBeNull();
+
+    $this->post(route('auth.staff.password-reset.verify'), [
+        'phone_number' => '085712345678',
+        'otp_request_id' => $otp['request_id'],
+        'otp_code' => $otp['code'],
+    ])->assertRedirect(route('auth.staff.password-reset.form'));
+
+    $this->post(route('auth.staff.password-reset.store'), [
+        'password' => 'password-ibu-baru-123',
+        'password_confirmation' => 'password-ibu-baru-123',
+    ])->assertRedirect(route('auth.staff.login.show'))
+      ->assertSessionHas('status');
+
+    expect(password_verify('password-ibu-baru-123', $pregnantUser->fresh()->password_hash))->toBeTrue();
+
+    // Verify pregnant user can login with the new password
+    $this->post(route('auth.staff.login'), [
+        'identifier' => '085712345678',
+        'password' => 'password-ibu-baru-123',
+    ])->assertRedirect(route('kehamilan.beranda'));
+});
+
+it('lets an admin user reset their password via Email OTP end to end', function () {
+    $admin = \App\Models\AdminUser::factory()->create(['email' => 'admin.test@sigadis.test']);
+
+    $this->post(route('auth.staff.password-reset.send'), ['phone_number' => 'admin.test@sigadis.test'])
+        ->assertRedirect(route('auth.staff.password-reset.verify.show', ['phone' => 'admin.test@sigadis.test']));
+
+    $otp = staffOtpFor('admin.test@sigadis.test');
+    expect($otp['code'])->not->toBeNull();
+
+    $this->post(route('auth.staff.password-reset.verify'), [
+        'phone_number' => 'admin.test@sigadis.test',
+        'otp_request_id' => $otp['request_id'],
+        'otp_code' => $otp['code'],
+    ])->assertRedirect(route('auth.staff.password-reset.form'));
+
+    $this->post(route('auth.staff.password-reset.store'), [
+        'password' => 'admin-password-baru',
+        'password_confirmation' => 'admin-password-baru',
+    ])->assertRedirect(route('auth.staff.login.show'))
+      ->assertSessionHas('status');
+
+    expect(password_verify('admin-password-baru', $admin->fresh()->password_hash))->toBeTrue();
+
+    // Verify admin can login with the new password
+    $this->post(route('auth.staff.login'), [
+        'identifier' => 'admin.test@sigadis.test',
+        'password' => 'admin-password-baru',
+    ])->assertRedirect(route('admin.verifikasi.index'));
 });
 
 it('does not reveal whether a phone number is registered when requesting a reset code', function () {
@@ -46,13 +112,13 @@ it('does not reveal whether a phone number is registered when requesting a reset
         ->assertRedirect(route('auth.staff.password-reset.verify.show', ['phone' => '089900001111']));
 });
 
-it('blocks setting a new password without a verified OTP session', function () {
+it('redirects to request form when accessing reset password form without a verified OTP session', function () {
     HealthcareWorker::factory()->create(['status' => 'verified', 'phone_number' => '081200002222']);
 
     $this->post(route('auth.staff.password-reset.store'), [
         'password' => 'password-baru-123',
         'password_confirmation' => 'password-baru-123',
-    ])->assertForbidden();
+    ])->assertRedirect(route('auth.staff.password-reset.request'));
 });
 
 it('rejects the wrong otp code', function () {

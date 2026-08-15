@@ -6,42 +6,128 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+/* =============================================================
+   SIGADIS — CSS Custom Properties (Design.md §2.6)
+   Single source of truth untuk seluruh warna — JANGAN diubah
+   tanpa review bersama (Design.md §2, aturan kritis).
+   ============================================================= */
+:root {
+    /* § 2.1 Brand Colors */
+    --brand-navy-900:   #2C4A6E;
+    --brand-navy-700:   #3D6086;
+    --brand-navy-100:   #DCE6EE;
+    --brand-pink-500:   #F3AEC0;
+    --brand-pink-200:   #FCE1E8;
+    --brand-pink-50:    #FDF3F6;
+    --brand-cream-100:  #F7EFE4;
+    --brand-white:      #FFFFFF;
+
+    /* § 2.2 Warna Status Risiko — WAJIB identik mobile & desktop */
+    --risk-low:         #4C9A6E;
+    --risk-low-bg:      #E6F4EC;
+    --risk-medium:      #E0A030;
+    --risk-medium-bg:   #FBF0DC;
+    --risk-high:        #D64550;
+    --risk-high-bg:     #FBE4E5;
+
+    /* § 2.3 Warna Darurat — prioritas visual tertinggi */
+    --emergency-alert:       #C81E2C;
+    --emergency-alert-pulse: #FF4A57;
+    --emergency-pending-bg:  #FFF5F5;
+    --emergency-handled:     #8C8C99;
+
+    /* § 2.4 Aksen & Fungsional */
+    --accent-amber:      #F0A63E;
+    --accent-gold-light: #FBE3B8;
+    --success:           #4C9A6E; /* = risk-low */
+    --error-form:        #E0703D; /* sengaja oranye, bukan merah darurat */
+    --info:              #3D6086; /* = brand-navy-700 */
+
+    /* § 2.5 Netral */
+    --neutral-900: #26292E;
+    --neutral-700: #4A4E57;
+    --neutral-500: #8A8D96;
+    --neutral-200: #E4E5E9;
+    --neutral-100: #F2F3F5;
+    --neutral-000: #FFFFFF;
+}
+
 @theme {
     --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 
-    /* Brand colors — Design.md §2.1 */
-    --color-brand-navy-900: #2c4a6e;
-    --color-brand-navy-700: #3d6086;
-    --color-brand-navy-100: #dce6ee;
-    --color-brand-pink-500: #f3aec0;
-    --color-brand-pink-200: #fce1e8;
-    --color-brand-pink-50: #fdf3f6;
-    --color-brand-cream-100: #f7efe4;
+    /* § 2.1 Brand Colors — Design.md */
+    --color-brand-navy-900:  #2C4A6E;
+    --color-brand-navy-700:  #3D6086;
+    --color-brand-navy-100:  #DCE6EE;
+    --color-brand-pink-500:  #F3AEC0;
+    --color-brand-pink-200:  #FCE1E8;
+    --color-brand-pink-50:   #FDF3F6;
+    --color-brand-cream-100: #F7EFE4;
+    --color-brand-white:     #FFFFFF;
 
-    /* Warna status risiko — Design.md §2.2, WAJIB identik mobile & desktop */
-    --color-risk-low: #4c9a6e;
-    --color-risk-low-bg: #e6f4ec;
-    --color-risk-medium: #e0a030;
-    --color-risk-medium-bg: #fbf0dc;
-    --color-risk-high: #d64550;
-    --color-risk-high-bg: #fbe4e5;
+    /* § 2.2 Warna Status Risiko — WAJIB identik mobile & desktop */
+    --color-risk-low:        #4C9A6E;
+    --color-risk-low-bg:     #E6F4EC;
+    --color-risk-medium:     #E0A030;
+    --color-risk-medium-bg:  #FBF0DC;
+    --color-risk-high:       #D64550;
+    --color-risk-high-bg:    #FBE4E5;
 
-    /* Warna darurat — Design.md §2.3, prioritas visual tertinggi */
-    --color-emergency: #c81e2c;
-    --color-emergency-pulse: #ff4a57;
-    --color-emergency-alert: #c81e2c;
-    --color-emergency-alert-pulse: #ff4a57;
-    --color-emergency-pending-bg: #fff5f5;
-    --color-emergency-handled: #8c8c99;
+    /* § 2.3 Warna Darurat — prioritas visual tertinggi */
+    --color-emergency:             #C81E2C;
+    --color-emergency-pulse:       #FF4A57;
+    --color-emergency-alert:       #C81E2C;
+    --color-emergency-alert-pulse: #FF4A57;
+    --color-emergency-pending-bg:  #FFF5F5;
+    --color-emergency-handled:     #8C8C99;
 
-    /* Aksen & fungsional — Design.md §2.4 */
-    --color-accent-amber: #f0a63e;
-    --color-error-form: #e0703d;
-    --color-info: #3d6086;
+    /* § 2.4 Aksen & Fungsional */
+    --color-accent-amber:      #F0A63E;
+    --color-accent-gold-light: #FBE3B8;
+    --color-success:           #4C9A6E;
+    --color-error-form:        #E0703D;
+    --color-info:              #3D6086;
+
+    /* § 2.5 Netral */
+    --color-neutral-900: #26292E;
+    --color-neutral-700: #4A4E57;
+    --color-neutral-500: #8A8D96;
+    --color-neutral-200: #E4E5E9;
+    --color-neutral-100: #F2F3F5;
+    /* § 2.6 Aliases matching login-web.html design */
+    --color-primary-navy-dark:   #2C4A6E;
+    --color-primary-navy-hover:  #3D6086;
+    --color-primary-fixed-dim:   #ABC9F3;
+    --color-desktop-bg:          #F2F3F5;
+    --color-surface-container-lowest: #FFFFFF;
+    --color-surface-container-low:    #F4F3F6;
+    --color-surface:             #FAF9FC;
+    --color-text-main:           #26292E;
+    --color-on-surface-variant:  #43474E;
+    --color-outline-variant:     #C3C6CF;
+}
+
+/* Material Symbols icon styling */
+.material-symbols-outlined {
+    font-family: 'Material Symbols Outlined', sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
 }
 
 /* Flows.md §29.2: ukuran teks "Besar" — skala rem root, Tailwind rem-based jadi ikut membesar tanpa sentuh tiap komponen. */
 html[data-text-size='besar'] {
     font-size: 112.5%;
 }
+
