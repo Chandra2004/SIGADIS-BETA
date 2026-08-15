@@ -8,6 +8,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       # --- NOTIFIKASI IN-PROGRESS ---
@@ -108,6 +110,26 @@ jobs:
           cd ..
           ls -l public/application
 
+      - name: 📦 Publish APK to GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: success()
+        with:
+          tag_name: latest
+          name: "SIGADIS Android App (Latest Build)"
+          draft: false
+          prerelease: false
+          files: public/application/SIGADIS.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 💾 Save APK as GitHub Action Artifact
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: SIGADIS-APK
+          path: public/application/SIGADIS.apk
+          retention-days: 14
+
 
       - name: 🧹 Cleanup
         run: |
@@ -126,6 +148,11 @@ jobs:
             **/node_modules/**
             **/tests/**
             **/android/**
+
+      - name: 📲 Upload & Overwrite SIGADIS.apk directly to Server via FTP
+        run: |
+          echo "Uploading SIGADIS.apk directly to server /dev-sigadis-beta.rf.gd/htdocs/public/application/SIGADIS.apk..."
+          curl --ftp-create-dirs -T public/application/SIGADIS.apk ftp://${{ secrets.FTP_SERVER }}/dev-sigadis-beta.rf.gd/htdocs/public/application/SIGADIS.apk --user ${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}
 
       - name: ⏱️ Calculate Duration
         if: always()
