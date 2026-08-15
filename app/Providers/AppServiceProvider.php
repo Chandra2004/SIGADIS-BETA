@@ -9,6 +9,7 @@ use App\Services\OtpGateways\WhatsAppOtpGateway;
 use App\Services\PushGateways\FcmPushGateway;
 use App\Services\PushGateways\LogPushGateway;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
 use Kreait\Firebase\Contract\Messaging;
 
 class AppServiceProvider extends ServiceProvider
@@ -34,6 +35,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        if (str_contains(config('app.url', ''), 'https://')) {
+            URL::forceScheme('https');
+        }
     }
 }
