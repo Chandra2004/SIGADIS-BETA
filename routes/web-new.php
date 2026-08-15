@@ -12,6 +12,11 @@ use Inertia\Inertia;
 | lewat masing-masing Page karena sudah dibungkus <LandingLayout> di sana.
 */
 
+// Route test untuk memverifikasi Vue + Inertia.js berjalan di server
+Route::get('/test', function () {
+    return Inertia::render('Test');
+})->name('test');
+
 Route::get('/', function () {
     return Inertia::render('Landing/Home');
 })->name('landing.home');
