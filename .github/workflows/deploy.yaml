@@ -21,27 +21,20 @@ jobs:
           format: markdown
           message: |
             ⏳ *[SIGADIS DEPLOYMENT IN PROGRESS]*
-            ------------------------------------------------
-            *Target Env*   : InfinityFree & Android APK
-            *Branch*       : `${{ github.ref_name }}`
-            *Triggered By* : @${{ github.actor }}
-
-            *Status*       : 🧱 Building Assets, APK, & FTP Sync
-            *Est. Time*    : ~3 minutes remaining
-            ------------------------------------------------
-            [📺 Track Live Progress](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            • *Branch*: `${{ github.ref_name }}`
+            • *Author*: @${{ github.actor }}
+            • *Status*: 🧱 Building Assets, APK, & FTP Sync
+            [📺 Track Progress](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
       - name: 🚚 Get latest code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # DIPINDAHKAN KE ATAS AGAR GIT MASIH TERSEDIA
-      - name: 📝 Extract Info for ChatOps
+      - name: 📝 Extract Commit Message
         id: info
         run: |
-          echo "changed_files=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | tr '\n' ', ')" >> $GITHUB_OUTPUT
-          echo "commit_msg=$(git log -1 --pretty=%B | head -n 1)" >> $GITHUB_OUTPUT
+          echo "commit_msg=$(git log -1 --pretty=%s | cut -c1-100)" >> $GITHUB_OUTPUT
 
       - name: ⏱️ Set Start Time
         run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
@@ -156,7 +149,7 @@ jobs:
           DURATION=$((END_TIME - START_TIME))
           echo "DURATION_MIN=$((DURATION / 60))m $((DURATION % 60))s" >> $GITHUB_ENV
 
-      # --- NOTIFIKASI SUCCESS (ALL-IN-ONE) ---
+      # --- NOTIFIKASI SUCCESS ---
       - name: ✅ Send Professional Success Notification
         if: success()
         uses: appleboy/telegram-action@master
@@ -166,22 +159,13 @@ jobs:
           format: markdown
           message: |
             🚀 *[SIGADIS DEPLOYMENT SUCCESS]*
-            ------------------------------------------------
-            *Branch*     : `${{ github.ref_name }}`
-            *Author*     : @${{ github.actor }}
-            *Duration*   : ${{ env.DURATION_MIN }}
-            *Status*     : Web & APK Deployed
+            • *Branch*: `${{ github.ref_name }}`
+            • *Author*: @${{ github.actor }}
+            • *Duration*: ${{ env.DURATION_MIN }}
+            • *Commit*: ${{ steps.info.outputs.commit_msg }}
 
-            📝 *RELEASE CHANGELOG:*
-            `${{ steps.info.outputs.commit_msg }}`
-
-            📂 *File Updated:*
-            `${{ steps.info.outputs.changed_files }}`
-            ------------------------------------------------
-            🌐 *Web App*: [https://dev-sigadis-beta.rf.gd](https://dev-sigadis-beta.rf.gd)
+            🌐 *Web*: [dev-sigadis-beta.rf.gd](https://dev-sigadis-beta.rf.gd)
             📱 *Android APK*: [Download SIGADIS.apk](https://github.com/Chandra2004/SIGADIS-BETA/releases/latest/download/SIGADIS.apk)
-            ------------------------------------------------
-            [📈 View Pipeline Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
       # --- NOTIFIKASI FAILED ---
       - name: 🚨 Send Professional Failure Notification
@@ -192,14 +176,9 @@ jobs:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           format: markdown
           message: |
-            🚨 *[SIGADIS PIPELINE ALERT] - BUILD FAILED*
-            ------------------------------------------------
-            *Branch*      : `${{ github.ref_name }}`
-            *Author*      : @${{ github.actor }}
-            *Duration*    : ${{ env.DURATION_MIN }}
+            🚨 *[SIGADIS DEPLOYMENT FAILED]*
+            • *Branch*: `${{ github.ref_name }}`
+            • *Author*: @${{ github.actor }}
+            • *Duration*: ${{ env.DURATION_MIN }}
 
-            ❌ *Status*: Pipeline process terminated unexpectedly.
-            > Periksa log di GitHub untuk melihat detail error (misal gagal di NPM build, APK, atau FTP).
-
-            ------------------------------------------------
-            [🔍 View Failure Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})  [🔄 Re-run Pipeline](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            [🔍 View Failure Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
