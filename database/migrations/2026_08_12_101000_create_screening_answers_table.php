@@ -22,7 +22,7 @@ return new class extends Migration
             $table->boolean('is_superseded')->default(false);
             $table->timestamps();
 
-            $table->index(['screening_session_id', 'screening_question_id']);
+            $table->index(['screening_session_id', 'screening_question_id'], 'screening_answers_session_question_idx');
         });
     }
 
