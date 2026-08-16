@@ -101,9 +101,36 @@ onUnmounted(() => {
             <span>{{ status }}</span>
         </div>
 
+        <!-- Ibu Hamil Attempting Web Login Notice -->
+        <div
+            v-if="form.errors.identifier && (form.errors.identifier.includes('Aplikasi Mobile') || form.errors.identifier.includes('Ibu Hamil'))"
+            class="mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 shadow-sm animate-fade-in"
+        >
+            <div class="flex items-start gap-3">
+                <div class="p-2 rounded-xl bg-amber-100 text-amber-700 shrink-0">
+                    <span class="material-symbols-outlined text-2xl">phone_android</span>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-sm font-bold text-amber-900">Perhatian: Akun Khusus Aplikasi Mobile</p>
+                    <p class="text-xs text-amber-800 leading-relaxed">
+                        Akun Ibu Hamil hanya dapat diakses melalui <strong>Aplikasi Mobile SIGADIS (Android)</strong> agar Bunda dapat menggunakan fitur skrining, panduan suara, dan tombol darurat secara maksimal.
+                    </p>
+                    <div class="pt-1">
+                        <Link
+                            :href="route('landing.download-apk')"
+                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2C4A6E] text-white text-xs font-bold shadow-sm hover:bg-[#1E334D] active:scale-95 transition-all"
+                        >
+                            <span class="material-symbols-outlined text-base">download</span>
+                            <span>Download Aplikasi SIGADIS (APK)</span>
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- General Error Alert -->
         <div
-            v-if="form.errors.phone_number || form.errors.identifier"
+            v-else-if="form.errors.phone_number || form.errors.identifier"
             class="mb-6 flex items-center gap-3 rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 text-sm font-medium text-rose-700"
         >
             <span class="material-symbols-outlined text-rose-600 text-lg">error</span>

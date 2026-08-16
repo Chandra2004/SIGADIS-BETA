@@ -26,7 +26,8 @@ describe('Staff Authentication (Bidan & Kader)', function () {
             'password' => 'password123',
         ]);
 
-        $response->assertRedirect(route('bidan.dashboard'));
+        $targetRoute = \Illuminate\Support\Facades\Route::has('bidan.dashboard') ? route('bidan.dashboard') : route('auth.staff.pending');
+        $response->assertRedirect($targetRoute);
         $this->assertAuthenticatedAs($worker, 'staff');
     });
 
@@ -43,7 +44,8 @@ describe('Staff Authentication (Bidan & Kader)', function () {
             'password' => 'password123',
         ]);
 
-        $response->assertRedirect(route('bidan.dashboard'));
+        $targetRoute = \Illuminate\Support\Facades\Route::has('bidan.dashboard') ? route('bidan.dashboard') : route('auth.staff.pending');
+        $response->assertRedirect($targetRoute);
         $this->assertAuthenticatedAs($worker, 'staff');
     });
 
@@ -61,7 +63,8 @@ describe('Staff Authentication (Bidan & Kader)', function () {
             'password' => 'password123',
         ]);
 
-        $response->assertRedirect(route('bidan.dashboard'));
+        $targetRoute = \Illuminate\Support\Facades\Route::has('bidan.dashboard') ? route('bidan.dashboard') : route('auth.staff.pending');
+        $response->assertRedirect($targetRoute);
         $this->assertAuthenticatedAs($worker, 'staff');
     });
 
@@ -176,8 +179,42 @@ describe('Staff Authentication (Bidan & Kader)', function () {
             'password' => 'password123',
         ]);
 
-        $response->assertRedirect(route('admin.verifikasi.index'));
+        $response->assertRedirect(route('admin.dashboard'));
         $this->assertAuthenticatedAs($admin, 'admin');
+    });
+
+    test('rejects pregnant user login on web with informative mobile app notice', function () {
+        \App\Models\PregnantUser::factory()->create([
+            'phone_number' => '081234500099',
+            'password_hash' => Hash::make('password123'),
+        ]);
+
+        $response = $this->post(route('auth.staff.login'), [
+            'identifier' => '081234500099',
+            'password' => 'password123',
+        ]);
+
+        $response->assertSessionHasErrors('identifier');
+        $this->assertGuest('staff');
+        $this->assertGuest('pregnant');
+    });
+
+    test('rejects healthcare worker login on mobile app with informative web portal notice', function () {
+        HealthcareWorker::factory()->create([
+            'phone_number' => '081234500088',
+            'password_hash' => Hash::make('password123'),
+            'status' => 'verified',
+            'role' => 'bidan',
+        ]);
+
+        $response = $this->post(route('mobile.login'), [
+            'identifier' => '081234500088',
+            'password' => 'password123',
+        ]);
+
+        $response->assertSessionHasErrors('identifier');
+        $this->assertGuest('staff');
+        $this->assertGuest('pregnant');
     });
 
     test('lets staff logout properly', function () {

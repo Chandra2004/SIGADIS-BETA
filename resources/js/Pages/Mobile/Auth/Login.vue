@@ -79,9 +79,27 @@ const submit = () => {
                 <span>{{ status || $page.props.flash?.status || $page.props.flash?.success }}</span>
             </div>
 
+            <!-- Bidan / Kader Attempting Mobile Login Notice -->
+            <div
+                v-if="form.errors.identifier && (form.errors.identifier.includes('Portal Website') || form.errors.identifier.includes('Bidan') || form.errors.identifier.includes('Administrator'))"
+                class="mb-4 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 shadow-sm animate-fade-in"
+            >
+                <div class="flex items-start gap-3">
+                    <div class="p-2 rounded-xl bg-amber-100 text-amber-700 shrink-0 mt-0.5">
+                        <span class="material-symbols-outlined text-xl">desktop_windows</span>
+                    </div>
+                    <div class="space-y-1">
+                        <p class="text-xs font-bold text-amber-900 uppercase tracking-wider">Khusus Tenaga Medis (Bidan & Kader)</p>
+                        <p class="text-xs text-amber-800 leading-relaxed">
+                            {{ form.errors.identifier }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             <!-- General Error Alert -->
             <div
-                v-if="form.errors.identifier && form.errors.identifier !== 'Nomor HP atau kata sandi tidak cocok.'"
+                v-else-if="form.errors.identifier && form.errors.identifier !== 'Nomor Handphone atau kata sandi tidak cocok.'"
                 class="mb-4 p-3.5 rounded-2xl bg-[#FBE4E5] border border-[#D64550]/30 text-[#93000A] text-xs font-medium flex items-start gap-2.5 shadow-xs"
             >
                 <span class="material-symbols-outlined text-lg text-[#D64550] shrink-0 mt-0.5">error</span>

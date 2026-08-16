@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\EmergencyAlert;
+use App\Models\Pregnancy;
+use App\Models\RiskAssessment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -11,10 +13,9 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Flows.md §27.1: metrik waktu respons darurat -- selisih triggered_at ke
- * acknowledged_at pertama (bukan handled_at, itu mengukur penyelesaian
- * bukan kecepatan dilihat). §27.2/§27.3 sengaja tidak dibangun di sini,
- * itu proses manual di luar sistem (studi kasus & proyeksi eksternal).
+ * Controller untuk Laporan, Metrik & Ekspor Data (Point 7).
+ * Menyediakan analisis data tren risiko maternal, evaluasi kecepatan respons darurat (KPI vs Kemenkes <5 min),
+ * evaluasi kasus nifas selesai (case closed), serta ekspor dokumen laporan resmi CSV untuk Dinas Kesehatan/Puskesmas.
  */
 class ReportingController extends Controller
 {
@@ -23,11 +24,58 @@ class ReportingController extends Controller
         [$from, $to] = $this->resolveRange($request);
         $stats = $this->responseTimeStats($from, $to);
 
+        // 1. Tren Penilaian Risiko Maternal dalam rentang waktu
+        $riskAssessments = RiskAssessment::query()
+            ->whereBetween('assessed_at', [$from, $to])
+            ->get();
+
+        $riskTrend = [
+            'total' => $riskAssessments->count(),
+            'rendah' => $riskAssessments->where('risk_level', 'rendah')->count(),
+            'sedang' => $riskAssessments->where('risk_level', 'sedang')->count(),
+            'tinggi' => $riskAssessments->where('risk_level', 'tinggi')->count(),
+        ];
+
+        // 2. Evaluasi Pasca Persalinan (Nifas & Kasus Selesai)
+        $maternalOutcome = [
+            'nifas_active' => Pregnancy::where('status', 'nifas')->count(),
+            'case_closed_safe' => Pregnancy::where('status', 'case_closed')->count(),
+        ];
+
+        // 3. Log Riwayat Kasus Darurat dalam Rentang Waktu
+        $alertLogs = EmergencyAlert::query()
+            ->whereBetween('triggered_at', [$from, $to])
+            ->with(['pregnancy.pregnantUser:id,full_name', 'riskAssessment:id,risk_level', 'recipients' => fn ($q) => $q->whereNotNull('acknowledged_at')->with('healthcareWorker:id,full_name,role')->orderBy('acknowledged_at')])
+            ->latest('triggered_at')
+            ->limit(25)
+            ->get()
+            ->map(function (EmergencyAlert $a) {
+                $firstAckRecipient = $a->recipients->first();
+                $firstAckTime = $firstAckRecipient?->acknowledged_at;
+                $diff = $firstAckTime ? $a->triggered_at->diffInSeconds($firstAckTime) : null;
+
+                return [
+                    'id' => $a->id,
+                    'mother_name' => $a->pregnancy?->pregnantUser?->full_name ?? ($a->pregnancy?->mother_name ?? 'Ibu Hamil'),
+                    'region_code' => $a->pregnancy?->region_code ?? '-',
+                    'risk_level' => $a->riskAssessment?->risk_level ?? 'tinggi',
+                    'trigger_type' => $a->trigger_type === 'manual_button' ? 'Tombol SOS' : 'Skrining Risiko Tinggi',
+                    'status' => $a->status,
+                    'triggered_at' => $a->triggered_at->format('d/m/Y H:i'),
+                    'first_responder' => $firstAckRecipient ? "{$firstAckRecipient->healthcareWorker?->full_name} ({$firstAckRecipient->healthcareWorker?->role})" : 'Belum Ada',
+                    'response_seconds' => $diff,
+                    'response_formatted' => $diff !== null ? ($diff < 60 ? "{$diff} detik" : round($diff / 60, 1).' menit') : '-',
+                ];
+            });
+
         return Inertia::render('Admin/Reporting', [
             'from' => $from->toDateString(),
             'to' => $to->toDateString(),
             'summary' => $stats['summary'],
             'distribution' => $stats['distribution'],
+            'riskTrend' => $riskTrend,
+            'maternalOutcome' => $maternalOutcome,
+            'alertLogs' => $alertLogs,
         ]);
     }
 
@@ -37,30 +85,40 @@ class ReportingController extends Controller
 
         $rows = EmergencyAlert::query()
             ->whereBetween('triggered_at', [$from, $to])
-            ->with(['pregnancy:id,region_code', 'riskAssessment:id,risk_level', 'recipients' => fn ($q) => $q->whereNotNull('acknowledged_at')->orderBy('acknowledged_at')])
+            ->with(['pregnancy.pregnantUser', 'riskAssessment:id,risk_level', 'recipients' => fn ($q) => $q->whereNotNull('acknowledged_at')->with('healthcareWorker')->orderBy('acknowledged_at')])
+            ->latest('triggered_at')
             ->get();
 
-        $filename = "laporan-waktu-respons-{$from->toDateString()}-sd-{$to->toDateString()}.csv";
+        $filename = "laporan-kesehatan-maternal-sigadis-{$from->toDateString()}-sd-{$to->toDateString()}.csv";
 
         return response()->streamDownload(function () use ($rows) {
             $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['alert_id', 'wilayah', 'risiko', 'trigger_type', 'triggered_at', 'acknowledged_at', 'waktu_respons_detik']);
+            fputcsv($handle, ['alert_id', 'nama_pasien', 'wilayah', 'tingkat_risiko', 'pemicu_alert', 'status_penanganan', 'waktu_trigger', 'waktu_respons', 'waktu_respons_detik', 'nakes_penanggap']);
 
             foreach ($rows as $alert) {
-                $firstAck = $alert->recipients->first()?->acknowledged_at;
+                $firstAck = $alert->recipients->first();
+                $ackTime = $firstAck?->acknowledged_at;
+                $diffSeconds = $ackTime ? $alert->triggered_at->diffInSeconds($ackTime) : '';
+
                 fputcsv($handle, [
                     $alert->id,
-                    $alert->pregnancy?->region_code,
-                    $alert->riskAssessment?->risk_level,
+                    $alert->pregnancy?->pregnantUser?->full_name ?? ($alert->pregnancy?->mother_name ?? 'Ibu Hamil'),
+                    $alert->pregnancy?->region_code ?? '-',
+                    $alert->riskAssessment?->risk_level ?? 'tinggi',
                     $alert->trigger_type,
+                    $alert->status,
                     $alert->triggered_at->toDateTimeString(),
-                    $firstAck?->toDateTimeString(),
-                    $firstAck ? $alert->triggered_at->diffInSeconds($firstAck) : null,
+                    $ackTime?->toDateTimeString() ?? 'Belum Direspon',
+                    $diffSeconds,
+                    $firstAck?->healthcareWorker?->full_name ?? '-',
                 ]);
             }
 
             fclose($handle);
-        }, $filename, ['Content-Type' => 'text/csv']);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
     }
 
     /** @return array{0: Carbon, 1: Carbon} */
@@ -111,6 +169,10 @@ class ReportingController extends Controller
     protected function median(Collection $sorted): float
     {
         $count = $sorted->count();
+        if ($count === 0) {
+            return 0.0;
+        }
+
         $middle = intdiv($count, 2);
 
         return $count % 2 === 0

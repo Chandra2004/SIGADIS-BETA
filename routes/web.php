@@ -5,9 +5,13 @@ use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminFacilityController;
+use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Admin\AreaAssignmentController;
 use App\Http\Controllers\Admin\PhoneOverrideController;
 use App\Http\Controllers\Admin\ReportingController;
+use App\Http\Controllers\Admin\ScreeningQuestionController;
 use App\Http\Controllers\Admin\WorkerVerificationController;
 use App\Http\Controllers\Auth\AdminAuthController;
 use App\Http\Controllers\Auth\PregnantAuthController;
@@ -20,7 +24,9 @@ use App\Http\Controllers\Bidan\AvailabilityController;
 use App\Http\Controllers\Bidan\ClinicalVisitController;
 use App\Http\Controllers\Bidan\DashboardController;
 use App\Http\Controllers\Bidan\DeviceTokenController;
+use App\Http\Controllers\Bidan\NotificationController as BidanNotificationController;
 use App\Http\Controllers\Bidan\PatientController;
+use App\Http\Controllers\Bidan\ProfileController as BidanProfileController;
 use App\Http\Controllers\Bidan\ReferralController;
 use App\Http\Controllers\EmergencyAlertController;
 use App\Http\Controllers\EmergencyAlertStatusController;
@@ -116,10 +122,45 @@ Route::middleware(['platform:web'])->group(function () {
 
         Route::middleware('auth:admin')->group(function () {
             Route::post('/logout', [AdminAuthController::class, 'logout'])->name('auth.admin.logout');
+            Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
             Route::get('/verifikasi', [WorkerVerificationController::class, 'index'])->name('admin.verifikasi.index');
             Route::post('/verifikasi/{worker}/setujui', [WorkerVerificationController::class, 'verify'])->name('admin.verifikasi.verify');
             Route::post('/verifikasi/{worker}/tolak', [WorkerVerificationController::class, 'reject'])->name('admin.verifikasi.reject');
             Route::post('/verifikasi/{worker}/batalkan-penolakan', [WorkerVerificationController::class, 'cancelRejection'])->name('admin.verifikasi.cancel-reject');
+
+            // --- Point 3: Zonasi & Penugasan Wilayah Kader ---
+            Route::get('/zonasi', [AreaAssignmentController::class, 'index'])->name('admin.zonasi.index');
+            Route::post('/zonasi', [AreaAssignmentController::class, 'store'])->name('admin.zonasi.store');
+            Route::delete('/zonasi/{areaAssignment}', [AreaAssignmentController::class, 'destroy'])->name('admin.zonasi.destroy');
+            Route::post('/area-assignments', [AreaAssignmentController::class, 'store'])->name('admin.area-assignments.store');
+            Route::delete('/area-assignments/{areaAssignment}', [AreaAssignmentController::class, 'destroy'])->name('admin.area-assignments.destroy');
+
+            // --- Point 4: Manajemen Fasilitas Kesehatan & Rujukan ---
+            Route::get('/fasilitas', [AdminFacilityController::class, 'index'])->name('admin.fasilitas.index');
+            Route::post('/fasilitas', [AdminFacilityController::class, 'store'])->name('admin.fasilitas.store');
+            Route::put('/fasilitas/{facility}', [AdminFacilityController::class, 'update'])->name('admin.fasilitas.update');
+            Route::delete('/fasilitas/{facility}', [AdminFacilityController::class, 'destroy'])->name('admin.fasilitas.destroy');
+
+            // --- Point 5: Bank Soal & Protokol Skrining ---
+            Route::get('/bank-soal', [ScreeningQuestionController::class, 'index'])->name('admin.bank-soal.index');
+            Route::post('/bank-soal', [ScreeningQuestionController::class, 'store'])->name('admin.bank-soal.store');
+            Route::put('/bank-soal/{screeningQuestion}', [ScreeningQuestionController::class, 'update'])->name('admin.bank-soal.update');
+            Route::post('/bank-soal/{screeningQuestion}/review', [ScreeningQuestionController::class, 'review'])->name('admin.bank-soal.review');
+            Route::delete('/bank-soal/{screeningQuestion}', [ScreeningQuestionController::class, 'destroy'])->name('admin.bank-soal.destroy');
+
+            // --- Point 6: Pemulihan Akun & Override Akses Ibu Hamil ---
+            Route::get('/ganti-nomor', [PhoneOverrideController::class, 'index'])->name('admin.ganti-nomor.index');
+            Route::post('/ganti-nomor/{pregnantUser}', [PhoneOverrideController::class, 'store'])->name('admin.ganti-nomor.store');
+
+            // --- Point 7: Laporan, Metrik & Ekspor Data ---
+            Route::get('/laporan', [ReportingController::class, 'index'])->name('admin.reporting.index');
+            Route::get('/laporan/export', [ReportingController::class, 'export'])->name('admin.reporting.export');
+
+            // --- Point 8: Pengaturan Sistem & Kelola Admin ---
+            Route::get('/pengaturan', [AdminSettingsController::class, 'index'])->name('admin.pengaturan.index');
+            Route::post('/pengaturan/admin', [AdminSettingsController::class, 'storeAdmin'])->name('admin.pengaturan.admin.store');
+            Route::put('/pengaturan/profil', [AdminSettingsController::class, 'updateProfile'])->name('admin.pengaturan.profile.update');
+            Route::delete('/pengaturan/admin/{adminUser}', [AdminSettingsController::class, 'destroyAdmin'])->name('admin.pengaturan.admin.destroy');
         });
     });
 });
@@ -231,48 +272,55 @@ Route::middleware(['platform:mobile'])->group(function () {
 //     Route::post('/notifikasi/{notification}/baca', [NotificationController::class, 'markRead'])->name('kehamilan.notifikasi.mark-read');
 //     Route::post('/notifikasi/baca-semua', [NotificationController::class, 'markAllRead'])->name('kehamilan.notifikasi.mark-all-read');
 // });
+*/
 
 // ==========================================
 // Rute Bidan / Kader (Staff Dashboard & Monitoring)
 // ==========================================
-// Route::prefix('bidan')->group(function () {
-//     Route::middleware('auth:staff')->group(function () {
-//         Route::get('/notifikasi', [NotificationController::class, 'index'])->name('bidan.notifikasi.index');
-//         Route::post('/notifikasi/{notification}/baca', [NotificationController::class, 'markRead'])->name('bidan.notifikasi.mark-read');
-//         Route::post('/notifikasi/baca-semua', [NotificationController::class, 'markAllRead'])->name('bidan.notifikasi.mark-all-read');
-//         Route::middleware('staff.verified')->group(function () {
-//             Route::get('/dashboard', [DashboardController::class, 'index'])->name('bidan.dashboard');
-//             Route::post('/status-nonaktif', [AvailabilityController::class, 'deactivate'])->name('bidan.availability.deactivate');
-//             Route::post('/status-aktif', [AvailabilityController::class, 'reactivate'])->name('bidan.availability.reactivate');
-//             Route::post('/device-token', [DeviceTokenController::class, 'store'])->name('bidan.device-token.store');
-//             Route::delete('/device-token', [DeviceTokenController::class, 'destroy'])->name('bidan.device-token.destroy');
-//             Route::get('/pasien/{pregnancy}', [PatientController::class, 'show'])->name('bidan.patients.show');
-//             Route::post('/pasien/{pregnancy}/bersalin', [PatientController::class, 'markDelivered'])->name('bidan.patients.mark-delivered');
-//             Route::post('/pasien/{pregnancy}/batalkan-nifas', [PatientController::class, 'cancelNifas'])->name('bidan.patients.cancel-nifas');
-//             Route::post('/pasien/{pregnancy}/ubah-tanggal-bersalin', [PatientController::class, 'editDeliveryDate'])->name('bidan.patients.edit-delivery-date');
-//             Route::post('/pasien/{pregnancy}/tutup-kasus', [PatientController::class, 'closeCase'])->name('bidan.patients.close-case');
-//             Route::post('/pasien/{pregnancy}/kunjungan', [ClinicalVisitController::class, 'store'])->name('bidan.patients.clinical-visits.store');
-//             Route::get('/pasien/{pregnancy}/unduh-riwayat', [ClinicalVisitController::class, 'exportPdf'])->name('bidan.patients.export-history');
-//             Route::get('/alert/{alert}', [AlertController::class, 'show'])->name('bidan.alerts.show');
-//             Route::post('/alert/{alert}/terima', [AlertController::class, 'acknowledge'])->name('bidan.alerts.acknowledge');
-//             Route::post('/alert/{alert}/batalkan-penanganan', [AlertController::class, 'cancelHandling'])->name('bidan.alerts.cancel-handling');
-//             Route::post('/alert/{alert}/selesai', [AlertController::class, 'resolve'])->name('bidan.alerts.resolve');
-//             Route::get('/alert/{alert}/riwayat', [AlertController::class, 'history'])->name('bidan.alerts.history');
-//             Route::get('/alert/{alert}/rujukan', [ReferralController::class, 'create'])->name('bidan.referrals.create');
-//             Route::post('/alert/{alert}/rujukan', [ReferralController::class, 'store'])->name('bidan.referrals.store');
-//         });
-//     });
-// });
+Route::prefix('bidan')->group(function () {
+    Route::middleware('auth:staff')->group(function () {
+        Route::middleware('staff.verified')->group(function () {
+            Route::get('/dashboard', [DashboardController::class, 'index'])->name('bidan.dashboard');
+            Route::post('/status-nonaktif', [AvailabilityController::class, 'deactivate'])->name('bidan.availability.deactivate');
+            Route::post('/status-aktif', [AvailabilityController::class, 'reactivate'])->name('bidan.availability.reactivate');
+            Route::post('/device-token', [DeviceTokenController::class, 'store'])->name('bidan.device-token.store');
+            Route::delete('/device-token', [DeviceTokenController::class, 'destroy'])->name('bidan.device-token.destroy');
 
-// ==========================================
-// Rute Operasional Admin Laporan & Wilayah
-// ==========================================
-// Route::prefix('admin')->middleware('auth:admin')->group(function () {
-//     Route::post('/wilayah-kader', [AreaAssignmentController::class, 'store'])->name('admin.area-assignments.store');
-//     Route::delete('/wilayah-kader/{areaAssignment}', [AreaAssignmentController::class, 'destroy'])->name('admin.area-assignments.destroy');
-//     Route::get('/laporan', [ReportingController::class, 'index'])->name('admin.reporting.index');
-//     Route::get('/laporan/unduh', [ReportingController::class, 'export'])->name('admin.reporting.export');
-//     Route::get('/ganti-nomor', [PhoneOverrideController::class, 'index'])->name('admin.ganti-nomor.index');
-//     Route::post('/ganti-nomor/{pregnantUser}', [PhoneOverrideController::class, 'store'])->name('admin.ganti-nomor.store');
-// });
-*/
+            // 1. Pasien Maternal & Kunjungan ANC
+            Route::get('/pasien/{pregnancy}', [PatientController::class, 'show'])->name('bidan.patients.show');
+            Route::post('/pasien/{pregnancy}/bersalin', [PatientController::class, 'markDelivered'])->name('bidan.patients.mark-delivered');
+            Route::post('/pasien/{pregnancy}/batalkan-nifas', [PatientController::class, 'cancelNifas'])->name('bidan.patients.cancel-nifas');
+            Route::post('/pasien/{pregnancy}/ubah-tanggal-bersalin', [PatientController::class, 'editDeliveryDate'])->name('bidan.patients.edit-delivery-date');
+            Route::post('/pasien/{pregnancy}/tutup-kasus', [PatientController::class, 'closeCase'])->name('bidan.patients.close-case');
+            Route::post('/pasien/{pregnancy}/kunjungan', [ClinicalVisitController::class, 'store'])->name('bidan.patients.clinical-visits.store');
+            Route::get('/pasien/{pregnancy}/unduh-riwayat', [ClinicalVisitController::class, 'exportPdf'])->name('bidan.patients.export-history');
+
+            // 2. Pusat Kasus Gawat Darurat
+            Route::get('/alerts', [AlertController::class, 'index'])->name('bidan.alerts.index');
+            Route::get('/alert/{alert}', [AlertController::class, 'show'])->name('bidan.alerts.show');
+            Route::post('/alert/{alert}/terima', [AlertController::class, 'acknowledge'])->name('bidan.alerts.acknowledge');
+            Route::post('/alert/{alert}/batalkan-penanganan', [AlertController::class, 'cancelHandling'])->name('bidan.alerts.cancel-handling');
+            Route::post('/alert/{alert}/selesai', [AlertController::class, 'resolve'])->name('bidan.alerts.resolve');
+            Route::get('/alert/{alert}/riwayat', [AlertController::class, 'history'])->name('bidan.alerts.history');
+
+            // 3. Fasilitas & Rujukan PONEK
+            Route::get('/fasilitas', [ReferralController::class, 'index'])->name('bidan.referrals.index');
+            Route::get('/alert/{alert}/rujukan', [ReferralController::class, 'create'])->name('bidan.referrals.create');
+            Route::post('/alert/{alert}/rujukan', [ReferralController::class, 'store'])->name('bidan.referrals.store');
+
+            // 4. Manajemen Status Cuti & Kesiapan Tugas
+            Route::get('/cuti', [AvailabilityController::class, 'index'])->name('bidan.availability.index');
+
+            // 5. Pusat Notifikasi & Sesi Perangkat
+            Route::get('/notifikasi', [BidanNotificationController::class, 'index'])->name('bidan.notifications.index');
+            Route::post('/notifikasi/{notification}/baca', [BidanNotificationController::class, 'markRead'])->name('bidan.notifications.mark-read');
+            Route::post('/notifikasi/baca-semua', [BidanNotificationController::class, 'markAllRead'])->name('bidan.notifications.mark-all-read');
+
+            // 6. Profil Nakes & Pengaturan Akun
+            Route::get('/profil', [BidanProfileController::class, 'index'])->name('bidan.profile.index');
+            Route::post('/profil/ubah-password', [BidanProfileController::class, 'updatePassword'])->name('bidan.profile.update-password');
+        });
+    });
+});
+
+

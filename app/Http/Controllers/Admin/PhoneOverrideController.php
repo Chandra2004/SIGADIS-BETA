@@ -13,10 +13,9 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Flows.md §21.2.3 & §26.5: pemulihan akses ibu hamil yang kehilangan
- * nomor HP sepenuhnya. Diverifikasi manual di luar sistem (bidan/admin
- * tatap muka), lalu admin override nomor di sini — wajib isi alasan
- * & bukti verifikasi, dicatat ke admin_override_logs untuk audit UU PDP.
+ * Controller untuk Pemulihan Akun & Override Akses Ibu Hamil (Point 6).
+ * Membantu ibu hamil yang kehilangan akses nomor HP/perangkat melalui verifikasi identitas,
+ * serta mencatat rekam jejak audit permanen sesuai kepatuhan regulasi UU Perlindungan Data Pribadi (UU PDP).
  */
 class PhoneOverrideController extends Controller
 {
@@ -24,25 +23,52 @@ class PhoneOverrideController extends Controller
     {
         $query = trim((string) $request->query('q', ''));
 
+        $results = PregnantUser::query()
+            ->when($query !== '', function ($q) use ($query) {
+                $q->where('phone_number', 'like', "%{$query}%")
+                    ->orWhere('full_name', 'like', "%{$query}%");
+            })
+            ->with(['pregnancies' => fn ($p) => $p->latest()])
+            ->latest()
+            ->limit(15)
+            ->get()
+            ->map(fn (PregnantUser $u) => [
+                'id' => $u->id,
+                'full_name' => $u->full_name,
+                'phone_number' => $u->phone_number,
+                'current_pregnancy' => $u->pregnancies->first() ? [
+                    'mother_name' => $u->pregnancies->first()->mother_name,
+                    'region_code' => $u->pregnancies->first()->region_code,
+                    'status' => $u->pregnancies->first()->status,
+                    'due_date' => $u->pregnancies->first()->estimated_due_date?->toDateString(),
+                ] : null,
+                'created_at' => $u->created_at?->format('d/m/Y') ?? '-',
+            ]);
+
+        $recentOverrides = AdminOverrideLog::query()
+            ->with(['pregnantUser:id,full_name', 'admin:id,full_name,institution'])
+            ->latest('performed_at')
+            ->limit(20)
+            ->get()
+            ->map(fn (AdminOverrideLog $log) => [
+                'id' => $log->id,
+                'mother_name' => $log->pregnantUser?->full_name ?? 'Ibu Hamil',
+                'old_phone_number' => $log->old_phone_number,
+                'new_phone_number' => $log->new_phone_number,
+                'reason' => $log->reason,
+                'admin_name' => $log->admin?->full_name ?? 'Administrator',
+                'performed_at' => $log->performed_at?->diffForHumans() ?? 'Baru saja',
+                'performed_date' => $log->performed_at?->format('d/m/Y H:i') ?? '-',
+            ]);
+
         return Inertia::render('Admin/GantiNomor', [
             'query' => $query,
-            'results' => $query === '' ? [] : PregnantUser::query()
-                ->where('phone_number', 'like', "%{$query}%")
-                ->orWhere('full_name', 'like', "%{$query}%")
-                ->limit(10)
-                ->get(['id', 'full_name', 'phone_number']),
-            'recentOverrides' => AdminOverrideLog::query()
-                ->with('pregnantUser:id,full_name')
-                ->latest('performed_at')
-                ->limit(10)
-                ->get()
-                ->map(fn (AdminOverrideLog $log) => [
-                    'id' => $log->id,
-                    'mother_name' => $log->pregnantUser->full_name,
-                    'old_phone_number' => $log->old_phone_number,
-                    'new_phone_number' => $log->new_phone_number,
-                    'reason' => $log->reason,
-                ]),
+            'results' => $results,
+            'recentOverrides' => $recentOverrides,
+            'metrics' => [
+                'total_mothers' => PregnantUser::count(),
+                'total_overrides' => AdminOverrideLog::count(),
+            ],
         ]);
     }
 
@@ -50,7 +76,7 @@ class PhoneOverrideController extends Controller
     {
         $data = $request->validate([
             'new_phone_number' => ['required', 'string', 'max:20', 'unique:pregnant_users,phone_number'],
-            'reason' => ['required', 'string', 'min:10'],
+            'reason' => ['required', 'string', 'min:10', 'max:500'],
         ]);
 
         abort_if($data['new_phone_number'] === $pregnantUser->phone_number, 422, 'Nomor baru sama dengan nomor lama.');
@@ -68,6 +94,6 @@ class PhoneOverrideController extends Controller
             $pregnantUser->update(['phone_number' => $data['new_phone_number']]);
         });
 
-        return redirect()->route('admin.ganti-nomor.index')->with('success', "Nomor HP {$pregnantUser->full_name} berhasil diubah.");
+        return redirect()->route('admin.ganti-nomor.index')->with('success', "Nomor HP {$pregnantUser->full_name} berhasil diperbarui menjadi {$data['new_phone_number']}. Log audit UU PDP tercatat.");
     }
 }
