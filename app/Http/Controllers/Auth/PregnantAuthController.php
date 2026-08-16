@@ -112,18 +112,9 @@ class PregnantAuthController extends Controller
 
         // Jika pendaftaran via form web (ada data registrasi stashed di session),
         // arahkan ke halaman Login dengan notifikasi sukses sesuai instruksi alur
-        if (! empty($regData)) {
-            return redirect()->route('auth.staff.login.show')->with('status', 'Pendaftaran akun Ibu Hamil berhasil! Silakan masuk menggunakan nomor WhatsApp dan kata sandi Anda.');
-        }
+        Auth::guard('pregnant')->logout();
 
-        Auth::guard('pregnant')->login($user, remember: true);
-        $request->session()->regenerate();
-
-        if ($isNewAccount && blank($user->full_name)) {
-            return redirect()->route('auth.pregnant.name.show');
-        }
-
-        return redirect()->route('kehamilan.beranda');
+        return redirect()->route('auth.staff.login.show')->with('status', 'Pendaftaran akun Ibu Hamil berhasil! Silakan masuk menggunakan nomor WhatsApp dan kata sandi Anda.');
     }
 
     protected function otpErrorMessage(string $result): string

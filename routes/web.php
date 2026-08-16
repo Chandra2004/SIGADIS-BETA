@@ -13,6 +13,8 @@ use App\Http\Controllers\Auth\AdminAuthController;
 use App\Http\Controllers\Auth\PregnantAuthController;
 use App\Http\Controllers\Auth\StaffAuthController;
 use App\Http\Controllers\Auth\StaffPasswordResetController;
+use App\Http\Controllers\Mobile\MobileAuthController;
+use App\Http\Controllers\Mobile\MobilePasswordResetController;
 use App\Http\Controllers\Bidan\AlertController;
 use App\Http\Controllers\Bidan\AvailabilityController;
 use App\Http\Controllers\Bidan\ClinicalVisitController;
@@ -43,7 +45,7 @@ Route::middleware(['platform:web'])->group(function () {
             || str_contains($request->userAgent() ?? '', 'wv');
 
         if ($isMobile) {
-            if (Auth::guard('pregnant')->check()) {
+            if (Auth::guard('pregnant')->check() && Route::has('kehamilan.beranda')) {
                 return redirect()->route('kehamilan.beranda');
             }
             return Inertia::render('Splash');
@@ -120,6 +122,47 @@ Route::middleware(['platform:web'])->group(function () {
             Route::post('/verifikasi/{worker}/batalkan-penolakan', [WorkerVerificationController::class, 'cancelRejection'])->name('admin.verifikasi.cancel-reject');
         });
     });
+});
+
+
+// =========================================================================
+// 3. RUTE MOBILE ANDROID (SPLASH, ONBOARDING, & AUTENTIKASI IBU HAMIL)
+// =========================================================================
+Route::middleware(['platform:mobile'])->group(function () {
+    // --- Entry Point Mobile ---
+    Route::get('/splash', function () {
+        if (Auth::guard('pregnant')->check() && Route::has('kehamilan.beranda')) {
+            return redirect()->route('kehamilan.beranda');
+        }
+        return Inertia::render('Splash');
+    })->name('splash');
+
+    Route::get('/onboarding', fn () => Inertia::render('Onboarding'))->name('onboarding');
+
+    // --- Autentikasi Mobile Khusus Ibu Hamil (Login, Register, OTP, Lupa Password) ---
+    Route::middleware(['guest:pregnant'])->group(function () {
+        // Login Mobile
+        Route::get('/mobile/login', [MobileAuthController::class, 'showLoginForm'])->name('mobile.login.show');
+        Route::post('/mobile/login', [MobileAuthController::class, 'login'])->name('mobile.login');
+
+        // Registrasi Mobile
+        Route::get('/mobile/daftar', [MobileAuthController::class, 'showRegisterForm'])->name('mobile.register.show');
+        Route::post('/mobile/daftar', [MobileAuthController::class, 'sendOtp'])->name('mobile.register.send');
+
+        // Verifikasi OTP Registrasi
+        Route::get('/mobile/daftar/verifikasi', [MobileAuthController::class, 'showVerifyForm'])->name('mobile.verify.show');
+        Route::post('/mobile/daftar/verifikasi', [MobileAuthController::class, 'verifyOtp'])->name('mobile.verify');
+
+        // Pemulihan Kata Sandi Mobile (Lupa Password)
+        Route::get('/mobile/lupa-password', [MobilePasswordResetController::class, 'showRequestForm'])->name('mobile.password-reset.request');
+        Route::post('/mobile/lupa-password', [MobilePasswordResetController::class, 'sendOtp'])->name('mobile.password-reset.send');
+        Route::get('/mobile/lupa-password/verifikasi', [MobilePasswordResetController::class, 'showVerifyForm'])->name('mobile.password-reset.verify.show');
+        Route::post('/mobile/lupa-password/verifikasi', [MobilePasswordResetController::class, 'verifyOtp'])->name('mobile.password-reset.verify');
+        Route::get('/mobile/lupa-password/atur', [MobilePasswordResetController::class, 'showResetForm'])->name('mobile.password-reset.form');
+        Route::post('/mobile/lupa-password/atur', [MobilePasswordResetController::class, 'resetPassword'])->name('mobile.password-reset.store');
+    });
+
+    Route::post('/mobile/logout', [MobileAuthController::class, 'logout'])->name('mobile.logout');
 });
 
 
