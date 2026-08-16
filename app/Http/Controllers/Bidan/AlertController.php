@@ -23,10 +23,52 @@ class AlertController extends Controller
     /** Flows.md §33.3: jendela waktu pembatalan "Terima/Tangani" salah pencet. */
     protected const CANCEL_WINDOW_MINUTES = 2;
 
+    public function index(Request $request): Response
+    {
+        $worker = Auth::guard('staff')->user();
+        $statusFilter = $request->query('status', 'semua');
+
+        $query = EmergencyAlert::query()
+            ->whereIn('pregnancy_id', $this->patientsFor($worker)->pluck('id'))
+            ->with(['pregnancy.pregnantUser', 'riskAssessment', 'handledBy'])
+            ->latest('triggered_at');
+
+        if ($statusFilter !== 'semua') {
+            $query->where('status', $statusFilter);
+        }
+
+        $alerts = $query->get()->map(fn (EmergencyAlert $a) => [
+            'id' => $a->id,
+            'status' => $a->status,
+            'trigger_type' => $a->trigger_type,
+            'triggered_at' => $a->triggered_at,
+            'mother_name' => $a->pregnancy->mother_name,
+            'gestational_age_weeks' => $a->pregnancy->gestational_age_weeks_at_registration,
+            'address' => $a->pregnancy->address,
+            'phone_number' => $a->pregnancy->pregnantUser?->phone_number,
+            'emergency_contact_name' => $a->pregnancy->emergency_contact_name,
+            'emergency_contact_phone' => $a->pregnancy->emergency_contact_phone,
+            'risk_level' => $a->riskAssessment?->risk_level,
+            'handled_by' => $a->handledBy?->full_name,
+            'triggered_symptoms' => $this->triggeredSymptomLabels($a),
+        ]);
+
+        $activeCount = EmergencyAlert::query()
+            ->whereIn('pregnancy_id', $this->patientsFor($worker)->pluck('id'))
+            ->whereIn('status', ['pending', 'delivered', 'being_handled'])
+            ->count();
+
+        return Inertia::render('Desktop/AlertList', [
+            'alerts' => $alerts,
+            'statusFilter' => $statusFilter,
+            'activeCount' => $activeCount,
+        ]);
+    }
+
     public function show(EmergencyAlert $alert): Response
     {
         $worker = $this->authorizeAlert($alert);
-        $alert->load(['pregnancy', 'riskAssessment', 'handledBy']);
+        $alert->load(['pregnancy.pregnantUser', 'riskAssessment', 'handledBy']);
 
         return Inertia::render('Desktop/AlertDetail', [
             'alert' => [
@@ -34,12 +76,15 @@ class AlertController extends Controller
                 'status' => $alert->status,
                 'trigger_type' => $alert->trigger_type,
                 'triggered_at' => $alert->triggered_at,
+                'latitude' => $alert->latitude,
+                'longitude' => $alert->longitude,
                 'handled_by' => $alert->handledBy?->full_name,
                 'escalated_to_kader_at' => $alert->escalated_to_kader_at,
                 'cancel_handling_expires_at' => $alert->handled_at?->addMinutes(self::CANCEL_WINDOW_MINUTES),
                 'pregnancy' => [
                     'id' => $alert->pregnancy->id,
                     'mother_name' => $alert->pregnancy->mother_name,
+                    'phone_number' => $alert->pregnancy->pregnantUser?->phone_number,
                     'gestational_age_weeks' => $alert->pregnancy->gestational_age_weeks_at_registration,
                     'address' => $alert->pregnancy->address,
                     'emergency_contact_name' => $alert->pregnancy->emergency_contact_name,

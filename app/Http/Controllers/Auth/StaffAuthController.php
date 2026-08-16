@@ -46,7 +46,7 @@ class StaffAuthController extends Controller
                 Auth::guard('admin')->login($admin, remember: (bool) $request->boolean('remember', true));
                 $request->session()->regenerate();
 
-                return redirect()->route('admin.verifikasi.index');
+                return redirect()->route('admin.dashboard');
             }
         }
 
@@ -98,10 +98,11 @@ class StaffAuthController extends Controller
 
         if ($pregnantUser && password_verify($data['password'], $pregnantUser->password_hash)) {
             RateLimiter::clear($limiterKey);
-            Auth::guard('pregnant')->login($pregnantUser, remember: (bool) $request->boolean('remember', true));
-            $request->session()->regenerate();
 
-            return redirect()->route('kehamilan.beranda');
+            // Ibu Hamil hanya dapat menggunakan Aplikasi Mobile Android
+            return back()->withErrors([
+                'identifier' => 'Akun Ibu Hamil hanya dapat diakses melalui Aplikasi Mobile SIGADIS (Android). Silakan unduh dan gunakan aplikasi SIGADIS di smartphone Bunda.',
+            ]);
         }
 
         RateLimiter::hit($limiterKey, 900);

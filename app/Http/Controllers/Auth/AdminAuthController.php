@@ -42,7 +42,7 @@ class AdminAuthController extends Controller
         Auth::guard('admin')->login($admin, remember: true);
         $request->session()->regenerate();
 
-        return redirect()->route('admin.verifikasi.index');
+        return redirect()->route('admin.dashboard');
     }
 
     public function logout(Request $request): RedirectResponse

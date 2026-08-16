@@ -38,6 +38,11 @@ class AlertRecipient extends Model
         return $this->belongsTo(EmergencyAlert::class, 'emergency_alert_id');
     }
 
+    public function emergencyAlert(): BelongsTo
+    {
+        return $this->belongsTo(EmergencyAlert::class, 'emergency_alert_id');
+    }
+
     public function healthcareWorker(): BelongsTo
     {
         return $this->belongsTo(HealthcareWorker::class);

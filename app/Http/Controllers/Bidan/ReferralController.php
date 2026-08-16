@@ -16,6 +16,36 @@ class ReferralController extends Controller
 {
     use ScopesPatientsForWorker;
 
+    /** Katalog & Kesiapan Faskes PONEK di Wilayah Nakes */
+    public function index(Request $request): Response
+    {
+        $worker = Auth::guard('staff')->user();
+        $query = Facility::query();
+
+        if ($worker->region_code) {
+            $query->where('region_code', $worker->region_code);
+        }
+
+        if ($request->boolean('has_icu')) {
+            $query->where('has_icu', true);
+        }
+        if ($request->boolean('has_nicu')) {
+            $query->where('has_nicu', true);
+        }
+        if ($search = trim((string) $request->query('search', ''))) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $facilities = $query
+            ->get(['id', 'name', 'type', 'address', 'phone_number', 'ambulance_phone', 'hospital_class', 'has_icu', 'has_nicu', 'nicu_bed_count', 'ambulance_status'])
+            ->values();
+
+        return Inertia::render('Desktop/FacilityCatalog', [
+            'facilities' => $facilities,
+            'regionCode' => $worker->region_code,
+        ]);
+    }
+
     /** Query ?has_icu=1&has_nicu=1 buat filter faskes (modal Pilih Faskes Rujukan). */
     public function create(Request $request, EmergencyAlert $alert): Response
     {

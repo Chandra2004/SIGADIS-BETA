@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             HealthcareWorkerSeeder::class,
             FacilitySeeder::class,
             ScreeningQuestionSeeder::class,
+            MaternalDataSeeder::class,
         ]);
     }
 }

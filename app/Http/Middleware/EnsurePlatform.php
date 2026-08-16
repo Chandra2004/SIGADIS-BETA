@@ -22,14 +22,14 @@ class EnsurePlatform
             || str_contains($request->userAgent() ?? '', 'wv')
             || $request->header('X-Platform') === 'mobile'
             || $request->query('platform') === 'mobile'
-            || app()->environment('local');
+            || app()->environment(['local', 'testing']);
 
         if ($platform === 'mobile' && !$isMobile) {
             // Jika rute khusus mobile tapi diakses dari web browser biasa di production
             return redirect()->route('landing.home');
         }
 
-        if ($platform === 'web' && $isMobile && !app()->environment('local')) {
+        if ($platform === 'web' && $isMobile && !app()->environment(['local', 'testing'])) {
             // Jika rute khusus web tapi diakses dari aplikasi mobile di production
             if (\Illuminate\Support\Facades\Route::has('splash')) {
                 return redirect()->route('splash');

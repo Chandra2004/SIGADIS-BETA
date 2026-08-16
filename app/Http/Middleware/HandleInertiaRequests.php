@@ -42,6 +42,12 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'info' => fn () => $request->session()->get('info'),
             ],
+            'auth' => [
+                'user' => fn () => $request->user(),
+                'admin' => fn () => Auth::guard('admin')->user()?->only('id', 'full_name', 'email', 'institution'),
+                'staff' => fn () => Auth::guard('staff')->user()?->only('id', 'full_name', 'phone_number', 'role', 'status', 'str_number', 'appointment_letter_ref', 'region_code'),
+                'pregnant' => fn () => Auth::guard('pregnant')->user()?->only('id', 'phone_number', 'full_name'),
+            ],
             // Badge lonceng notifikasi (desain Figma) — dipakai sisi ibu hamil & bidan/kader.
             'unreadNotificationCount' => function () {
                 $notifiable = Auth::guard('pregnant')->user() ?? Auth::guard('staff')->user();

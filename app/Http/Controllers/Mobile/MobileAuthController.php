@@ -35,14 +35,37 @@ class MobileAuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        $phone = $this->normalizePhone($request->input('identifier'));
+        $rawIdentifier = trim($request->input('identifier'));
+        $phone = $this->normalizePhone($rawIdentifier);
         $password = $request->input('password');
 
+        // 1. Cek apakah pengguna adalah Bidan / Kader (HealthcareWorker)
+        $worker = \App\Models\HealthcareWorker::where('phone_number', $rawIdentifier)
+            ->when($phone, fn ($query) => $query->orWhere('phone_number', $phone))
+            ->orWhere('str_number', $rawIdentifier)
+            ->orWhere('appointment_letter_ref', $rawIdentifier)
+            ->first();
+
+        if ($worker && Hash::check($password, $worker->password_hash)) {
+            return back()->withErrors([
+                'identifier' => 'Akun Bidan dan Kader hanya dapat diakses melalui Portal Website SIGADIS. Silakan masuk melalui peramban/browser di laptop/komputer Anda.',
+            ]);
+        }
+
+        // 2. Cek apakah pengguna adalah Admin (AdminUser)
+        $admin = \App\Models\AdminUser::where('email', $rawIdentifier)->first();
+        if ($admin && Hash::check($password, $admin->password_hash)) {
+            return back()->withErrors([
+                'identifier' => 'Akun Administrator hanya dapat diakses melalui Portal Website SIGADIS.',
+            ]);
+        }
+
+        // 3. Cek akun Ibu Hamil (PregnantUser)
         $user = PregnantUser::where('phone_number', $phone)->first();
 
         if (! $user || ! Hash::check($password, $user->password_hash)) {
             throw ValidationException::withMessages([
-                'identifier' => 'Nomor HP atau kata sandi tidak cocok.',
+                'identifier' => 'Nomor Handphone atau kata sandi tidak cocok.',
             ]);
         }
 
