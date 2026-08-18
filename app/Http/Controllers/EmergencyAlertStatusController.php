@@ -28,7 +28,7 @@ class EmergencyAlertStatusController extends Controller
             return redirect()->route('kehamilan.beranda');
         }
 
-        return Inertia::render('Kehamilan/StatusDarurat', [
+        return Inertia::render('Mobile/Dashboard', [
             'alert' => [
                 'id' => $alert->id,
                 'status' => $alert->status,

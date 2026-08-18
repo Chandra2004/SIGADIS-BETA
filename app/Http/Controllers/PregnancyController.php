@@ -20,7 +20,7 @@ class PregnancyController extends Controller
 
     public function showRegistrationForm(): Response
     {
-        return Inertia::render('Kehamilan/Registrasi', [
+        return Inertia::render('Mobile/PregnancyRegistration', [
             'consentVersion' => '1.0',
         ]);
     }
@@ -59,7 +59,7 @@ class PregnancyController extends Controller
         abort_unless($pregnancy->pregnant_user_id === Auth::guard('pregnant')->id(), 403);
         $pregnancy->load('activeMidwifeAssignment.midwife');
 
-        return Inertia::render('Kehamilan/RegistrasiSukses', [
+        return Inertia::render('Mobile/PregnancyRegistration', [
             'motherName' => $pregnancy->mother_name,
             'gestationalAgeWeeks' => $pregnancy->currentGestationalAgeWeeks(),
             'estimatedDueDate' => $pregnancy->estimated_due_date,
@@ -75,14 +75,11 @@ class PregnancyController extends Controller
             ?->load('activeMidwifeAssignment.midwife', 'latestRiskAssessment')
             ->loadCount('screeningSessions');
 
-        // Flows.md §13.4: layar transisi masa nifas tampil sekali begitu bidan
-        // menandai persalinan, sebelum Beranda versi nifas biasa. Ditandai
-        // lewat sesi (bukan kolom baru) -- cukup buat "sudah lihat sekali".
         if ($pregnancy && $pregnancy->status === 'nifas' && ! session()->has("nifas_transition_seen_{$pregnancy->id}")) {
             return redirect()->route('kehamilan.nifas.transisi');
         }
 
-        return Inertia::render('Kehamilan/Beranda', [
+        return Inertia::render('Mobile/Dashboard', [
             'motherName' => $user->full_name,
             'profilePhotoUrl' => $user->profilePhotoUrl(),
             'pregnancy' => $pregnancy ? [
@@ -102,7 +99,7 @@ class PregnancyController extends Controller
         $user = Auth::guard('pregnant')->user();
         $pregnancy = $this->currentPregnancy();
 
-        return Inertia::render('Kehamilan/Profil', [
+        return Inertia::render('Mobile/Settings', [
             'motherName' => $user->full_name,
             'phoneNumber' => $user->phone_number,
             'profilePhotoUrl' => $user->profilePhotoUrl(),
@@ -116,7 +113,7 @@ class PregnancyController extends Controller
         $pregnancy = $this->currentPregnancy() ?? abort(404);
         abort_unless($pregnancy->status === 'nifas', 404);
 
-        return Inertia::render('Kehamilan/TransisiNifas', [
+        return Inertia::render('Mobile/Dashboard', [
             'motherName' => $pregnancy->mother_name,
         ]);
     }
@@ -149,7 +146,7 @@ class PregnancyController extends Controller
     {
         $pregnancy = $this->currentPregnancy();
 
-        return Inertia::render('Kehamilan/GantiBidan', [
+        return Inertia::render('Mobile/PregnancyRegistration', [
             'regionCode' => $pregnancy->region_code,
             'currentMidwifeId' => $pregnancy->activeMidwifeAssignment?->midwife_id,
         ]);

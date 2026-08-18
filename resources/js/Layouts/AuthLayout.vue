@@ -1,5 +1,6 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
+import ToastNotification from '@/Components/ToastNotification.vue';
 
 defineProps({
     panelEyebrow: { type: String, default: 'Portal Bidan & Kader' },
@@ -13,6 +14,7 @@ defineProps({
 
 <template>
     <div class="min-h-screen w-full bg-[#F2F3F5] text-[#26292E] flex items-center justify-center overflow-x-hidden md:p-6 lg:p-10 font-sans">
+        <ToastNotification />
         <!-- Split Screen Container -->
         <div class="w-full max-w-[1440px] min-h-screen md:min-h-[720px] md:h-[88vh] flex flex-col md:flex-row bg-white md:rounded-3xl shadow-2xl relative overflow-hidden">
             

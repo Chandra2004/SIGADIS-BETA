@@ -20,14 +20,14 @@ class HistoryController extends Controller
         $pregnancy = $this->currentPregnancy();
 
         if (! $pregnancy) {
-            return Inertia::render('Kehamilan/Riwayat', [
+            return Inertia::render('Mobile/History', [
                 'motherName' => null,
                 'screeningSessions' => [],
                 'referrals' => [],
             ]);
         }
 
-        return Inertia::render('Kehamilan/Riwayat', [
+        return Inertia::render('Mobile/History', [
             'motherName' => $pregnancy->mother_name,
             'screeningSessions' => $pregnancy->screeningSessions()->with('riskAssessment')->latest('started_at')->get(),
             'referrals' => $pregnancy->referrals()->with('facility')->latest('referred_at')->get(),

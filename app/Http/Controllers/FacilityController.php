@@ -28,7 +28,7 @@ class FacilityController extends Controller
 
         $midwife = $pregnancy?->activeMidwifeAssignment?->midwife;
 
-        return Inertia::render('Kehamilan/Faskes', [
+        return Inertia::render('Mobile/Facilities', [
             'facilities' => $facilities,
             'midwife' => $midwife ? ['full_name' => $midwife->full_name, 'phone_number' => $midwife->phone_number] : null,
         ]);

@@ -19,6 +19,13 @@ use App\Http\Controllers\Auth\StaffAuthController;
 use App\Http\Controllers\Auth\StaffPasswordResetController;
 use App\Http\Controllers\Mobile\MobileAuthController;
 use App\Http\Controllers\Mobile\MobilePasswordResetController;
+use App\Http\Controllers\Mobile\MobileDashboardController;
+use App\Http\Controllers\Mobile\MobileScreeningController;
+use App\Http\Controllers\Mobile\MobileHistoryController;
+use App\Http\Controllers\Mobile\MobileFacilityController;
+use App\Http\Controllers\Mobile\MobileSettingsController;
+use App\Http\Controllers\Mobile\MobilePrivacyController;
+use App\Http\Controllers\Mobile\MobilePregnancyRegistrationController;
 use App\Http\Controllers\Bidan\AlertController;
 use App\Http\Controllers\Bidan\AvailabilityController;
 use App\Http\Controllers\Bidan\ClinicalVisitController;
@@ -151,6 +158,7 @@ Route::middleware(['platform:web'])->group(function () {
             // --- Point 6: Pemulihan Akun & Override Akses Ibu Hamil ---
             Route::get('/ganti-nomor', [PhoneOverrideController::class, 'index'])->name('admin.ganti-nomor.index');
             Route::post('/ganti-nomor/{pregnantUser}', [PhoneOverrideController::class, 'store'])->name('admin.ganti-nomor.store');
+            Route::post('/ganti-nomor/{id}/pulihkan', [PhoneOverrideController::class, 'restore'])->name('admin.ganti-nomor.restore');
 
             // --- Point 7: Laporan, Metrik & Ekspor Data ---
             Route::get('/laporan', [ReportingController::class, 'index'])->name('admin.reporting.index');
@@ -204,75 +212,107 @@ Route::middleware(['platform:mobile'])->group(function () {
     });
 
     Route::post('/mobile/logout', [MobileAuthController::class, 'logout'])->name('mobile.logout');
+
+    // --- Halaman & Fitur Khusus Ibu Hamil (Mobile App) ---
+    Route::middleware(['auth:pregnant'])->group(function () {
+        // Beranda / Dashboard Ibu Hamil (Adaptive Multi-State)
+        Route::get('/mobile/dashboard', [MobileDashboardController::class, 'index'])->name('mobile.dashboard');
+        Route::get('/beranda', [MobileDashboardController::class, 'index'])->name('kehamilan.beranda');
+
+        // Pendaftaran Profil Kehamilan Baru
+        Route::get('/mobile/registrasi-kehamilan', [MobilePregnancyRegistrationController::class, 'show'])->name('mobile.pregnancy.register.show');
+        Route::post('/mobile/registrasi-kehamilan', [MobilePregnancyRegistrationController::class, 'store'])->name('mobile.pregnancy.register.store');
+
+        // Switch Multi-Profil Kehamilan
+        Route::post('/mobile/profil/{pregnancy}/switch', [MobileDashboardController::class, 'switchProfile'])->name('mobile.profile.switch');
+
+        // Modul Skrining Gejala Interaktif (Conversational)
+        Route::get('/mobile/skrining', [MobileScreeningController::class, 'index'])->name('mobile.screening.index');
+        Route::post('/mobile/skrining/submit', [MobileScreeningController::class, 'submit'])->name('mobile.screening.submit');
+
+        // Modul Riwayat Kehamilan & Skrining
+        Route::get('/mobile/riwayat', [MobileHistoryController::class, 'index'])->name('mobile.history.index');
+
+        // Modul Direktori Faskes Terdekat
+        Route::get('/mobile/faskes', [MobileFacilityController::class, 'index'])->name('mobile.facilities.index');
+
+        // Modul Pengaturan Aplikasi & Aksesibilitas
+        Route::get('/mobile/pengaturan', [MobileSettingsController::class, 'index'])->name('mobile.settings.index');
+        Route::post('/mobile/pengaturan', [MobileSettingsController::class, 'update'])->name('mobile.settings.update');
+
+        // Modul Privasi & UU PDP
+        Route::get('/mobile/privasi', [MobilePrivacyController::class, 'index'])->name('mobile.privacy.index');
+        Route::post('/mobile/privasi/cabut', [MobilePrivacyController::class, 'revokeConsent'])->name('mobile.privacy.revoke');
+        Route::post('/mobile/privasi/aktifkan', [MobilePrivacyController::class, 'reactivateConsent'])->name('mobile.privacy.reactivate');
+        Route::post('/mobile/privasi/hapus', [MobilePrivacyController::class, 'requestDeletion'])->name('mobile.privacy.delete');
+
+        // Modul Aktivasi Peringatan Darurat SOS
+        Route::post('/mobile/darurat/aktivasi', [MobileDashboardController::class, 'triggerEmergency'])->name('mobile.emergency.activate');
+        Route::post('/mobile/darurat/selesai', [MobileDashboardController::class, 'resolveEmergency'])->name('mobile.emergency.resolve');
+    });
 });
 
 
 
 
-// =========================================================================
-// RUTE LAINNYA (NON-LANDING & NON-AUTH) - SEMENTARA DINONAKTIFKAN
-// =========================================================================
-
-/*
 // ==========================================
 // Rute Mobile Entry (Splash & Onboarding)
 // ==========================================
-// Route::get('/splash', function () {
-//     if (Auth::guard('pregnant')->check()) {
-//         return redirect()->route('kehamilan.beranda');
-//     }
-//     return Inertia::render('Splash');
-// })->name('splash');
-// Route::get('/onboarding', fn () => Inertia::render('Onboarding'))->name('onboarding');
-// Route::get('/welcome', [WelcomeController::class, 'index'])->name('welcome');
+Route::get('/splash', function () {
+    if (Auth::guard('pregnant')->check()) {
+        return redirect()->route('kehamilan.beranda');
+    }
+    return Inertia::render('Splash');
+})->name('splash');
+Route::get('/onboarding', fn () => Inertia::render('Onboarding'))->name('onboarding');
+Route::get('/welcome', [WelcomeController::class, 'index'])->name('welcome');
 
 // ==========================================
-// Rute In-App Kehamilan, Skrining, Darurat & Faskes (Ibu Hamil)
+// Rute In-App Kehamilan, Skrining, Darurat & Faskes (Ibu Hamil Desktop)
 // ==========================================
-// Route::middleware('auth:pregnant')->group(function () {
-//     Route::get('/kehamilan/registrasi', [PregnancyController::class, 'showRegistrationForm'])->name('kehamilan.registrasi.show');
-//     Route::get('/kehamilan/bidan-kandidat', [PregnancyController::class, 'midwifeCandidates'])->name('kehamilan.midwife-candidates');
-//     Route::post('/kehamilan/registrasi', [PregnancyController::class, 'store'])->name('kehamilan.registrasi.store');
-//     Route::get('/kehamilan/registrasi/{pregnancy}/sukses', [PregnancyController::class, 'registrationSuccess'])->name('kehamilan.registrasi.sukses');
-//     Route::get('/beranda', [PregnancyController::class, 'beranda'])->name('kehamilan.beranda');
-//     Route::get('/profil', [PregnancyController::class, 'profil'])->name('kehamilan.profil');
-//     Route::get('/kehamilan/transisi-nifas', [PregnancyController::class, 'nifasTransition'])->name('kehamilan.nifas.transisi');
-//     Route::post('/kehamilan/transisi-nifas', [PregnancyController::class, 'acknowledgeNifasTransition'])->name('kehamilan.nifas.transisi.ack');
-//     Route::post('/kehamilan/{pregnancy}/aktifkan', [PregnancyController::class, 'switchActive'])->name('kehamilan.switch-active');
-//     Route::get('/kehamilan/ganti-bidan', [PregnancyController::class, 'showChangeMidwife'])->name('kehamilan.ganti-bidan.show');
-//     Route::post('/kehamilan/ganti-bidan', [PregnancyController::class, 'changeMidwife'])->name('kehamilan.ganti-bidan.store');
-//     Route::get('/skrining/transisi', [ScreeningController::class, 'transition'])->name('skrining.transisi');
-//     Route::post('/skrining/mulai', [ScreeningController::class, 'start'])->name('skrining.mulai');
-//     Route::get('/skrining/{session}', [ScreeningController::class, 'show'])->name('skrining.show');
-//     Route::post('/skrining/{session}/jawab', [ScreeningController::class, 'answer'])->name('skrining.jawab');
-//     Route::post('/skrining/{session}/lewati', [ScreeningController::class, 'skip'])->name('skrining.lewati');
-//     Route::get('/skrining/{session}/kembali', [ScreeningController::class, 'back'])->name('skrining.kembali');
-//     Route::get('/skrining/{session}/hasil', [ScreeningController::class, 'hasil'])->name('skrining.hasil');
-//     Route::post('/darurat/aktivasi', [EmergencyAlertController::class, 'activate'])->name('darurat.aktivasi');
-//     Route::get('/darurat/status', [EmergencyAlertStatusController::class, 'show'])->name('darurat.status');
-//     Route::get('/faskes', [FacilityController::class, 'index'])->name('kehamilan.faskes');
-//     Route::get('/riwayat', [HistoryController::class, 'index'])->name('kehamilan.riwayat');
-//     Route::get('/privasi', [PrivacyController::class, 'index'])->name('kehamilan.privasi');
-//     Route::post('/privasi/cabut-consent', [PrivacyController::class, 'revokeConsent'])->name('kehamilan.privasi.revoke-consent');
-//     Route::post('/privasi/aktifkan-consent', [PrivacyController::class, 'reactivateConsent'])->name('kehamilan.privasi.reactivate-consent');
-//     Route::post('/privasi/hapus-data', [PrivacyController::class, 'requestDeletion'])->name('kehamilan.privasi.request-deletion');
-//     Route::post('/privasi/izin-gps', [PrivacyController::class, 'updateGpsPermission'])->name('kehamilan.privasi.gps-permission');
-//     Route::post('/privasi/izin-berbagi-data', [PrivacyController::class, 'updateShareDataPermission'])->name('kehamilan.privasi.share-data-permission');
-//     Route::get('/privasi/unduh-data', [PrivacyController::class, 'exportData'])->name('kehamilan.privasi.export-data');
-//     Route::get('/pengaturan', [SettingsController::class, 'show'])->name('kehamilan.pengaturan');
-//     Route::post('/pengaturan', [SettingsController::class, 'update'])->name('kehamilan.pengaturan.update');
-//     Route::post('/pengaturan/foto', [SettingsController::class, 'updatePhoto'])->name('kehamilan.pengaturan.foto.update');
-//     Route::delete('/pengaturan/foto', [SettingsController::class, 'destroyPhoto'])->name('kehamilan.pengaturan.foto.destroy');
-//     Route::get('/ganti-nomor', [PhoneChangeController::class, 'show'])->name('akun.ganti-nomor.show');
-//     Route::post('/ganti-nomor/kirim-lama', [PhoneChangeController::class, 'sendOldNumberOtp'])->name('akun.ganti-nomor.send-old');
-//     Route::post('/ganti-nomor/verifikasi-lama', [PhoneChangeController::class, 'verifyOldNumberOtp'])->name('akun.ganti-nomor.verify-old');
-//     Route::post('/ganti-nomor/kirim-baru', [PhoneChangeController::class, 'sendNewNumberOtp'])->name('akun.ganti-nomor.send-new');
-//     Route::post('/ganti-nomor/verifikasi-baru', [PhoneChangeController::class, 'verifyNewNumberOtp'])->name('akun.ganti-nomor.verify-new');
-//     Route::get('/notifikasi', [NotificationController::class, 'index'])->name('kehamilan.notifikasi.index');
-//     Route::post('/notifikasi/{notification}/baca', [NotificationController::class, 'markRead'])->name('kehamilan.notifikasi.mark-read');
-//     Route::post('/notifikasi/baca-semua', [NotificationController::class, 'markAllRead'])->name('kehamilan.notifikasi.mark-all-read');
-// });
-*/
+Route::middleware('auth:pregnant')->group(function () {
+    Route::get('/kehamilan/registrasi', [PregnancyController::class, 'showRegistrationForm'])->name('kehamilan.registrasi.show');
+    Route::get('/kehamilan/bidan-kandidat', [PregnancyController::class, 'midwifeCandidates'])->name('kehamilan.midwife-candidates');
+    Route::post('/kehamilan/registrasi', [PregnancyController::class, 'store'])->name('kehamilan.registrasi.store');
+    Route::get('/kehamilan/registrasi/{pregnancy}/sukses', [PregnancyController::class, 'registrationSuccess'])->name('kehamilan.registrasi.sukses');
+    Route::get('/beranda', [MobileDashboardController::class, 'index'])->name('kehamilan.beranda');
+    Route::get('/profil', [PregnancyController::class, 'profil'])->name('kehamilan.profil');
+    Route::get('/kehamilan/transisi-nifas', [PregnancyController::class, 'nifasTransition'])->name('kehamilan.nifas.transisi');
+    Route::post('/kehamilan/transisi-nifas', [PregnancyController::class, 'acknowledgeNifasTransition'])->name('kehamilan.nifas.transisi.ack');
+    Route::post('/kehamilan/{pregnancy}/aktifkan', [PregnancyController::class, 'switchActive'])->name('kehamilan.switch-active');
+    Route::get('/kehamilan/ganti-bidan', [PregnancyController::class, 'showChangeMidwife'])->name('kehamilan.ganti-bidan.show');
+    Route::post('/kehamilan/ganti-bidan', [PregnancyController::class, 'changeMidwife'])->name('kehamilan.ganti-bidan.store');
+    Route::get('/skrining/transisi', [ScreeningController::class, 'transition'])->name('skrining.transisi');
+    Route::post('/skrining/mulai', [ScreeningController::class, 'start'])->name('skrining.mulai');
+    Route::get('/skrining/{session}', [ScreeningController::class, 'show'])->name('skrining.show');
+    Route::post('/skrining/{session}/jawab', [ScreeningController::class, 'answer'])->name('skrining.jawab');
+    Route::post('/skrining/{session}/lewati', [ScreeningController::class, 'skip'])->name('skrining.lewati');
+    Route::get('/skrining/{session}/kembali', [ScreeningController::class, 'back'])->name('skrining.kembali');
+    Route::get('/skrining/{session}/hasil', [ScreeningController::class, 'hasil'])->name('skrining.hasil');
+    Route::post('/darurat/aktivasi', [EmergencyAlertController::class, 'activate'])->name('darurat.aktivasi');
+    Route::get('/darurat/status', [EmergencyAlertStatusController::class, 'show'])->name('darurat.status');
+    Route::get('/faskes', [FacilityController::class, 'index'])->name('kehamilan.faskes');
+    Route::get('/riwayat', [HistoryController::class, 'index'])->name('kehamilan.riwayat');
+    Route::get('/privasi', [PrivacyController::class, 'index'])->name('kehamilan.privasi');
+    Route::post('/privasi/cabut-consent', [PrivacyController::class, 'revokeConsent'])->name('kehamilan.privasi.revoke-consent');
+    Route::post('/privasi/aktifkan-consent', [PrivacyController::class, 'reactivateConsent'])->name('kehamilan.privasi.reactivate-consent');
+    Route::post('/privasi/hapus-data', [PrivacyController::class, 'requestDeletion'])->name('kehamilan.privasi.request-deletion');
+    Route::post('/privasi/izin-gps', [PrivacyController::class, 'updateGpsPermission'])->name('kehamilan.privasi.gps-permission');
+    Route::post('/privasi/izin-berbagi-data', [PrivacyController::class, 'updateShareDataPermission'])->name('kehamilan.privasi.share-data-permission');
+    Route::get('/privasi/unduh-data', [PrivacyController::class, 'exportData'])->name('kehamilan.privasi.export-data');
+    Route::get('/pengaturan', [SettingsController::class, 'show'])->name('kehamilan.pengaturan');
+    Route::post('/pengaturan', [SettingsController::class, 'update'])->name('kehamilan.pengaturan.update');
+    Route::post('/pengaturan/foto', [SettingsController::class, 'updatePhoto'])->name('kehamilan.pengaturan.foto.update');
+    Route::delete('/pengaturan/foto', [SettingsController::class, 'destroyPhoto'])->name('kehamilan.pengaturan.foto.destroy');
+    Route::get('/ganti-nomor', [PhoneChangeController::class, 'show'])->name('akun.ganti-nomor.show');
+    Route::post('/ganti-nomor/kirim-lama', [PhoneChangeController::class, 'sendOldNumberOtp'])->name('akun.ganti-nomor.send-old');
+    Route::post('/ganti-nomor/verifikasi-lama', [PhoneChangeController::class, 'verifyOldNumberOtp'])->name('akun.ganti-nomor.verify-old');
+    Route::post('/ganti-nomor/kirim-baru', [PhoneChangeController::class, 'sendNewNumberOtp'])->name('akun.ganti-nomor.send-new');
+    Route::post('/ganti-nomor/verifikasi-baru', [PhoneChangeController::class, 'verifyNewNumberOtp'])->name('akun.ganti-nomor.verify-new');
+    Route::get('/notifikasi', [NotificationController::class, 'index'])->name('kehamilan.notifikasi.index');
+    Route::post('/notifikasi/{notification}/baca', [NotificationController::class, 'markRead'])->name('kehamilan.notifikasi.mark-read');
+    Route::post('/notifikasi/baca-semua', [NotificationController::class, 'markAllRead'])->name('kehamilan.notifikasi.mark-all-read');
+});
 
 // ==========================================
 // Rute Bidan / Kader (Staff Dashboard & Monitoring)
@@ -311,15 +351,17 @@ Route::prefix('bidan')->group(function () {
             // 4. Manajemen Status Cuti & Kesiapan Tugas
             Route::get('/cuti', [AvailabilityController::class, 'index'])->name('bidan.availability.index');
 
-            // 5. Pusat Notifikasi & Sesi Perangkat
-            Route::get('/notifikasi', [BidanNotificationController::class, 'index'])->name('bidan.notifications.index');
-            Route::post('/notifikasi/{notification}/baca', [BidanNotificationController::class, 'markRead'])->name('bidan.notifications.mark-read');
-            Route::post('/notifikasi/baca-semua', [BidanNotificationController::class, 'markAllRead'])->name('bidan.notifications.mark-all-read');
-
             // 6. Profil Nakes & Pengaturan Akun
             Route::get('/profil', [BidanProfileController::class, 'index'])->name('bidan.profile.index');
             Route::post('/profil/ubah-password', [BidanProfileController::class, 'updatePassword'])->name('bidan.profile.update-password');
         });
+
+        // 5. Pusat Notifikasi & Sesi Perangkat (Dapat diakses oleh nakes pending & verified)
+        Route::get('/notifikasi', [BidanNotificationController::class, 'index'])->name('bidan.notifications.index');
+        Route::post('/notifikasi/{notification}/baca', [BidanNotificationController::class, 'markRead'])->name('bidan.notifications.mark-read');
+        Route::post('/notifikasi/{notification}/mark-read', [BidanNotificationController::class, 'markRead'])->name('bidan.notifikasi.mark-read');
+        Route::post('/notifikasi/baca-semua', [BidanNotificationController::class, 'markAllRead'])->name('bidan.notifications.mark-all-read');
+        Route::post('/notifikasi/mark-all-read', [BidanNotificationController::class, 'markAllRead'])->name('bidan.notifikasi.mark-all-read');
     });
 });
 

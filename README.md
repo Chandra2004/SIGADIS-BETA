@@ -1,59 +1,171 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SIGADIS (Sistem Informasi Gizi & Kesehatan Ibu Hamil) - GEMASTIK
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi terintegrasi multi-platform (**Web & Mobile Android**) untuk pemantauan kesehatan ibu hamil, pencegahan stunting, serta deteksi risiko kehamilan secara dini.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🛠️ Tech Stack
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Backend:** Laravel 11 (PHP 8.2+)
+- **Frontend:** Vue 3 (Composition API) + Inertia.js
+- **Styling:** TailwindCSS v4 + DaisyUI
+- **Mobile Engine:** Capacitor v8 (Android)
+- **WhatsApp Gateway:** Node.js Service (Baileys)
+- **Database:** MySQL / PostgreSQL
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 📋 Prasyarat Sistem (Prerequisites)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+| Kebutuhan | Versi Minimum / Rekomendasi |
+| :--- | :--- |
+| **PHP** | `^8.2` (dengan extension `pdo`, `mbstring`, `openssl`, `curl`, `gd`) |
+| **Composer** | `^2.x` |
+| **Node.js & NPM** | Node.js `^18.x` / `^20.x` & NPM `^9.x` |
+| **Java JDK** | OpenJDK 17 atau 21 (`java --version` & `javac --version`) |
+| **Android SDK & ADB** | Android Studio dengan Platform-Tools |
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## 🚀 Setup Awal Proyek (Pertama Kali Clone)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Jalankan perintah berikut di terminal:
 
-### Premium Partners
+```bash
+# 1. Install dependensi Backend & Frontend
+composer install
+npm install
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+# 2. Salin environment file
+cp .env.example .env
 
-## Contributing
+# 3. Generate Application Key
+php artisan key:generate
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# 4. Konfigurasi database di .env, lalu migrasi & seeder
+php artisan migrate --seed
 
-## Code of Conduct
+# 5. Buat symlink storage
+php artisan storage:link
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+## 💻 Panduan Menjalankan Proyek (Windows & macOS)
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 1. Web Development (Khusus Web Admin / Bidan / Faskes)
 
-## License
+Jalankan server backend dan Vite secara bersamaan:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+npm run dev:mobile
+```
+> Perintah ini otomatis menjalankan `php artisan serve --host=0.0.0.0 --port=8000` dan `npm run dev` (Vite) secara paralel.
+
+Akses Web di browser: **`http://localhost:8000`**
+
+---
+
+### 2. Mobile Android Development (Role Ibu Hamil)
+
+#### 🍏 Panduan untuk Pengguna macOS:
+1. **Pastikan ADB terpasang:**
+   - Jika sudah install Android Studio, tambahkan PATH ke `~/.zshrc`:
+     ```bash
+     echo 'export ANDROID_HOME=$HOME/Library/Android/sdk' >> ~/.zshrc
+     echo 'export PATH=$PATH:$ANDROID_HOME/platform-tools' >> ~/.zshrc
+     source ~/.zshrc
+     ```
+   - Cek dengan: `adb version`
+2. **Buka Emulator Android Studio (AVD) atau Colok HP Fisik** (pastikan USB Debugging aktif).
+3. **Jalankan Server Lokal di Terminal 1:**
+   ```bash
+   npm run dev:mobile
+   ```
+4. **Build & Jalankan Aplikasi ke Android di Terminal 2:**
+   ```bash
+   npm run cap:run
+   ```
+
+---
+
+#### 🪟 Panduan untuk Pengguna Windows:
+
+##### Opsi A: Menggunakan Emulator Android Studio (AVD) / HP Fisik
+1. Pastikan `adb` sudah terdaftar di Environment Variables (PATH).
+2. Hubungkan HP fisik (USB Debugging aktif) atau nyalakan AVD.
+3. Jalankan server lokal:
+   ```powershell
+   npm run dev:mobile
+   ```
+4. Di terminal lain, deploy aplikasi:
+   ```powershell
+   npm run cap:run
+   ```
+
+##### Opsi B: Menggunakan Emulator MEmu (Port 21503)
+1. Buka emulator **MEmu**.
+2. Jalankan Keep-Alive daemon (agar koneksi ADB tidak putus otomatis):
+   ```powershell
+   npm run adb:keepalive:win
+   ```
+3. Di terminal terpisah, jalankan server backend:
+   ```powershell
+   npm run dev:mobile
+   ```
+4. Di terminal lainnya, jalankan build dan deploy ke MEmu:
+   ```powershell
+   npm run cap:run:memu
+   ```
+
+---
+
+### 3. WhatsApp Notification Service
+
+Untuk menjalankan gateway pengiriman OTP dan notifikasi WhatsApp:
+
+```bash
+# Menjalankan WhatsApp Service (Scan QR code saat pertama kali)
+npm run whatsapp:service
+
+# Logout sesi WhatsApp yang tersimpan
+npm run whatsapp:logout
+```
+
+---
+
+## 📜 Daftar Perintah NPM (NPM Scripts Reference)
+
+| Perintah | Deskripsi | Kompatibilitas OS |
+| :--- | :--- | :--- |
+| `npm run dev` | Menjalankan Vite Dev Server | Windows & macOS |
+| `npm run build` | Melakukan build bundle production frontend | Windows & macOS |
+| `npm run dev:mobile` | Menjalankan Laravel Server (`0.0.0.0:8000`) + Vite bersamaan | Windows & macOS |
+| `npm run cap:sync` | Build frontend dan sync aset web ke folder native Android | Windows & macOS |
+| `npm run cap:run` | Sync dan deploy aplikasi ke emulator AVD / HP fisik aktif | Windows & macOS |
+| `npm run cap:run:memu` | Konek ke MEmu (`127.0.0.1:21503`) lalu deploy aplikasi | Khusus Windows (MEmu) |
+| `npm run adb:keepalive:win` | Menjaga koneksi ADB MEmu tetap hidup via PowerShell | Khusus Windows |
+| `npm run assets:generate` | Generate icon dan splash screen Capacitor | Windows & macOS |
+| `npm run whatsapp:service` | Menjalankan background worker WhatsApp Gateway | Windows & macOS |
+| `npm run whatsapp:logout` | Menghapus sesi login WhatsApp bot | Windows & macOS |
+
+---
+
+## 🔧 Troubleshooting Umum
+
+### 1. Aplikasi Mobile Tidak Bisa Konek ke Server Lokal (`Network Error` / `ERR_CONNECTION_REFUSED`)
+Jika HP/Emulator tidak bisa menghubungi `http://localhost:8000`, lakukan reverse port ADB:
+```bash
+adb reverse tcp:8000 tcp:8000
+adb reverse tcp:5173 tcp:5173
+```
+
+### 2. Device / Emulator Tidak Terdeteksi
+Cek daftar perangkat yang terhubung:
+```bash
+adb devices
+```
+Jika kosong:
+- **HP Fisik:** Pastikan mode **USB Debugging** aktif dan izinkan otorisasi komputer (*Always allow*).
+- **MEmu:** Jalankan `adb connect 127.0.0.1:21503`.
+- **Android Studio AVD:** Buka *Device Manager* di Android Studio dan klik tombol *Play* pada Virtual Device.

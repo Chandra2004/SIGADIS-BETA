@@ -20,7 +20,7 @@ class SettingsController extends Controller
     {
         $user = Auth::guard('pregnant')->user();
 
-        return Inertia::render('Kehamilan/Pengaturan', [
+        return Inertia::render('Mobile/Settings', [
             'settings' => $user->only(
                 'text_size',
                 'tts_enabled',

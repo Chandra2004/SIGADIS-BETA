@@ -33,13 +33,14 @@ class NotificationController extends Controller
         ]);
     }
 
-    public function markRead(string $id): RedirectResponse
+    public function markRead(Request $request, string $notification): RedirectResponse
     {
         $worker = Auth::guard('staff')->user();
-        $notification = $worker->notifications()->where('id', $id)->first();
-
-        if ($notification) {
-            $notification->markAsRead();
+        if ($worker) {
+            \Illuminate\Support\Facades\DB::table('notifications')
+                ->where('id', $notification)
+                ->where('notifiable_id', $worker->id)
+                ->update(['read_at' => now()]);
         }
 
         return back()->with('success', 'Notifikasi ditandai dibaca.');
