@@ -76,11 +76,7 @@ class MobileAuthController extends Controller
             return redirect()->route('auth.pregnant.name.show');
         }
 
-        if (\Illuminate\Support\Facades\Route::has('kehamilan.beranda')) {
-            return redirect()->route('kehamilan.beranda');
-        }
-
-        return redirect()->route('mobile.login.show')->with('status', 'Login berhasil!');
+        return redirect()->route('mobile.dashboard');
     }
 
     public function showRegisterForm(): Response

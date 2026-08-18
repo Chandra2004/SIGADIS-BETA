@@ -33,7 +33,7 @@ class ScreeningController extends Controller
             'session_type' => ['required', Rule::in(['initial', 'periodic', 'nifas'])],
         ]);
 
-        return Inertia::render('Skrining/Transisi', ['sessionType' => $data['session_type']]);
+        return Inertia::render('Mobile/Screening', ['sessionType' => $data['session_type']]);
     }
 
     public function start(Request $request): RedirectResponse
@@ -143,7 +143,7 @@ class ScreeningController extends Controller
             ? ScreeningQuestion::query()->whereIn('code', $riskAssessment->triggered_rule_codes)->pluck('question_text')->all()
             : [];
 
-        return Inertia::render('Skrining/Hasil', [
+        return Inertia::render('Mobile/Screening', [
             'riskAssessment' => $riskAssessment,
             'alertSent' => $riskAssessment && $riskAssessment->risk_level === 'tinggi',
             'triggeredSymptoms' => $triggeredSymptoms,
@@ -155,7 +155,7 @@ class ScreeningController extends Controller
         $answeredCodes = $this->activeAnsweredCodes($session)->reject(fn ($code) => $code === $question->code)->values();
         $total = $this->navigator->applicableQuestions($session->pregnancy, $session->session_type)->count();
 
-        return Inertia::render('Skrining/Pertanyaan', [
+        return Inertia::render('Mobile/Screening', [
             'session' => $session->only('id', 'session_type'),
             'question' => $question->only('id', 'question_text', 'category'),
             'progress' => [

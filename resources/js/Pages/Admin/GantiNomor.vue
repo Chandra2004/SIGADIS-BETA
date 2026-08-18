@@ -61,6 +61,14 @@ const submitOverride = () => {
         },
     });
 };
+
+const restoreMotherAccount = (mother) => {
+    if (confirm(`Apakah Anda yakin ingin memulihkan dan mengaktifkan kembali akun "${mother.full_name}"? Rekam data kehamilan akan diaktifkan kembali.`)) {
+        router.post(route('admin.ganti-nomor.restore', mother.id), {}, {
+            preserveScroll: true,
+        });
+    }
+};
 </script>
 
 <template>
@@ -79,18 +87,34 @@ const submitOverride = () => {
                         Pemulihan Akun & Override Nomor HP
                     </h1>
                     <p class="text-sm text-[#43474E]">
-                        Bantu pemulihan akses bagi Ibu Hamil yang kehilangan nomor HP/perangkat melalui validasi identitas fisik (Buku KIA / KTP).
+                        Bantu pemulihan akses dan reaktivasi bagi Ibu Hamil yang kehilangan nomor HP/perangkat atau sebelumnya menghapus akun mandiri melalui validasi identitas fisik (Buku KIA / KTP).
                     </p>
                 </div>
             </div>
 
             <!-- Metrik Ringkas -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
                 <div class="bg-white p-5 rounded-3xl border border-[#E3E2E5] shadow-xs space-y-2">
-                    <span class="text-xs font-bold text-[#73777F] uppercase tracking-wider">Total Ibu Hamil Terdaftar</span>
+                    <span class="text-xs font-bold text-[#73777F] uppercase tracking-wider">Total Terdaftar</span>
                     <div class="flex items-baseline gap-2">
                         <span class="text-3xl font-extrabold text-[#123356]">{{ metrics.total_mothers }}</span>
                         <span class="text-xs font-semibold text-[#73777F]">Akun</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-3xl border border-[#E3E2E5] shadow-xs space-y-2">
+                    <span class="text-xs font-bold text-[#73777F] uppercase tracking-wider">Akun Aktif</span>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-3xl font-extrabold text-[#4C9A6E]">{{ metrics.total_active ?? metrics.total_mothers }}</span>
+                        <span class="text-xs font-semibold text-[#73777F]">Aktif</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-3xl border border-[#E3E2E5] shadow-xs space-y-2">
+                    <span class="text-xs font-bold text-[#73777F] uppercase tracking-wider">Nonaktif (Dihapus)</span>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-3xl font-extrabold text-[#D64550]">{{ metrics.total_deleted ?? 0 }}</span>
+                        <span class="text-xs font-semibold text-[#73777F]">Soft-Deleted</span>
                     </div>
                 </div>
 
@@ -101,22 +125,14 @@ const submitOverride = () => {
                         <span class="text-xs font-semibold text-[#73777F]">Kasus</span>
                     </div>
                 </div>
-
-                <div class="bg-white p-5 rounded-3xl border border-[#E3E2E5] shadow-xs space-y-2">
-                    <span class="text-xs font-bold text-[#73777F] uppercase tracking-wider">Kepatuhan Rekam Audit</span>
-                    <div class="flex items-baseline gap-2">
-                        <span class="text-3xl font-extrabold text-emerald-700">100%</span>
-                        <span class="text-xs font-semibold text-emerald-700 font-bold">UU PDP Compliant</span>
-                    </div>
-                </div>
             </div>
 
             <!-- 1. Form Pencarian & Daftar Akun Ibu Hamil -->
             <div class="bg-white rounded-3xl border border-[#E3E2E5] shadow-xs overflow-hidden">
                 <div class="p-6 border-b border-[#F2F3F5] flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
-                        <h2 class="text-base font-extrabold text-[#123356]">Pencarian Akun Ibu Hamil</h2>
-                        <p class="text-xs text-[#73777F]">Cari nama atau nomor HP lama untuk melakukan pemulihan akses</p>
+                        <h2 class="text-base font-extrabold text-[#123356]">Pencarian & Pemulihan Akun Ibu Hamil</h2>
+                        <p class="text-xs text-[#73777F]">Cari nama atau nomor HP lama untuk melakukan pemulihan akses atau reaktivasi akun</p>
                     </div>
 
                     <div class="flex items-center gap-2 max-w-md w-full">
@@ -146,9 +162,9 @@ const submitOverride = () => {
                             <tr>
                                 <th class="py-3.5 px-6">Nama Ibu Hamil</th>
                                 <th class="py-3.5 px-4">Nomor HP Terdaftar</th>
-                                <th class="py-3.5 px-4">Wilayah</th>
+                                <th class="py-3.5 px-4">Status Akun</th>
                                 <th class="py-3.5 px-4 text-center">Status Kehamilan</th>
-                                <th class="py-3.5 px-6 text-right">Aksi</th>
+                                <th class="py-3.5 px-6 text-right">Aksi Pemulihan</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-[#F2F3F5] text-xs">
@@ -170,8 +186,21 @@ const submitOverride = () => {
                                 <td class="py-4 px-4 font-mono text-[#26292E] font-bold">
                                     {{ mother.phone_number }}
                                 </td>
-                                <td class="py-4 px-4 text-[#73777F] font-mono text-[11px]">
-                                    {{ mother.current_pregnancy?.region_code || '-' }}
+                                <td class="py-4 px-4">
+                                    <span
+                                        v-if="mother.is_deleted"
+                                        class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-red-100 text-[#D64550]"
+                                    >
+                                        <span class="w-1.5 h-1.5 rounded-full bg-[#D64550]"></span>
+                                        Nonaktif (Dihapus Mandiri)
+                                    </span>
+                                    <span
+                                        v-else
+                                        class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-[#4C9A6E]"
+                                    >
+                                        <span class="w-1.5 h-1.5 rounded-full bg-[#4C9A6E]"></span>
+                                        Aktif
+                                    </span>
                                 </td>
                                 <td class="py-4 px-4 text-center">
                                     <span
@@ -184,14 +213,29 @@ const submitOverride = () => {
                                     </span>
                                 </td>
                                 <td class="py-4 px-6 text-right">
-                                    <button
-                                        type="button"
-                                        @click="openOverrideModal(mother)"
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-all shadow-xs cursor-pointer active:scale-95"
-                                    >
-                                        <span class="material-symbols-outlined text-sm">phone_iphone</span>
-                                        <span>Ganti Nomor HP</span>
-                                    </button>
+                                    <div class="inline-flex items-center gap-2 justify-end">
+                                        <!-- Jika Ter-Soft-Delete: Tombol Pulihkan -->
+                                        <button
+                                            v-if="mother.is_deleted"
+                                            type="button"
+                                            @click="restoreMotherAccount(mother)"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#4C9A6E] hover:bg-[#3d7d59] text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                                        >
+                                            <span class="material-symbols-outlined text-sm">settings_backup_restore</span>
+                                            <span>Pulihkan Akun</span>
+                                        </button>
+
+                                        <!-- Tombol Ganti Nomor HP -->
+                                        <button
+                                            v-else
+                                            type="button"
+                                            @click="openOverrideModal(mother)"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-all shadow-xs cursor-pointer active:scale-95"
+                                        >
+                                            <span class="material-symbols-outlined text-sm">phone_iphone</span>
+                                            <span>Ganti Nomor HP</span>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>

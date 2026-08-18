@@ -71,7 +71,7 @@ it('lets a pregnant user reset their password via WhatsApp OTP end to end', func
     expect(password_verify('password-ibu-baru-123', $pregnantUser->fresh()->password_hash))->toBeTrue();
 
     // Verify pregnant user can login with the new password
-    $this->post(route('auth.staff.login'), [
+    $this->withHeaders(['X-Is-Native' => '1'])->post(route('auth.staff.login'), [
         'identifier' => '085712345678',
         'password' => 'password-ibu-baru-123',
     ])->assertRedirect(route('kehamilan.beranda'));
@@ -104,7 +104,7 @@ it('lets an admin user reset their password via Email OTP end to end', function 
     $this->post(route('auth.staff.login'), [
         'identifier' => 'admin.test@sigadis.test',
         'password' => 'admin-password-baru',
-    ])->assertRedirect(route('admin.verifikasi.index'));
+    ])->assertRedirect(route('admin.dashboard'));
 });
 
 it('does not reveal whether a phone number is registered when requesting a reset code', function () {

@@ -15,6 +15,8 @@ return new class extends Migration
             $table->foreignId('risk_assessment_id')->nullable()->constrained()->nullOnDelete();
             $table->enum('status', ['pending', 'delivered', 'being_handled', 'resolved'])->default('pending');
             $table->timestamp('triggered_at');
+            $table->decimal('latitude', 10, 8)->nullable();
+            $table->decimal('longitude', 11, 8)->nullable();
             $table->foreignId('handled_by_id')->nullable()->constrained('healthcare_workers')->nullOnDelete();
             $table->timestamp('handled_at')->nullable();
             $table->timestamp('escalated_to_kader_at')->nullable();

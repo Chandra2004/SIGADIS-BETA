@@ -15,7 +15,8 @@ use Inertia\Response;
 /**
  * Controller untuk Pemulihan Akun & Override Akses Ibu Hamil (Point 6).
  * Membantu ibu hamil yang kehilangan akses nomor HP/perangkat melalui verifikasi identitas,
- * serta mencatat rekam jejak audit permanen sesuai kepatuhan regulasi UU Perlindungan Data Pribadi (UU PDP).
+ * serta memulihkan akun ibu hamil yang terhapus mandiri (Soft Delete),
+ * dengan mencatat rekam jejak audit permanen sesuai kepatuhan regulasi UU Perlindungan Data Pribadi (UU PDP).
  */
 class PhoneOverrideController extends Controller
 {
@@ -23,19 +24,21 @@ class PhoneOverrideController extends Controller
     {
         $query = trim((string) $request->query('q', ''));
 
-        $results = PregnantUser::query()
+        $results = PregnantUser::withTrashed()
             ->when($query !== '', function ($q) use ($query) {
                 $q->where('phone_number', 'like', "%{$query}%")
                     ->orWhere('full_name', 'like', "%{$query}%");
             })
-            ->with(['pregnancies' => fn ($p) => $p->latest()])
+            ->with(['pregnancies' => fn ($p) => $p->withTrashed()->latest()])
             ->latest()
-            ->limit(15)
+            ->limit(20)
             ->get()
             ->map(fn (PregnantUser $u) => [
                 'id' => $u->id,
                 'full_name' => $u->full_name,
                 'phone_number' => $u->phone_number,
+                'is_deleted' => $u->trashed(),
+                'deleted_at' => $u->deleted_at?->format('d/m/Y H:i'),
                 'current_pregnancy' => $u->pregnancies->first() ? [
                     'mother_name' => $u->pregnancies->first()->mother_name,
                     'region_code' => $u->pregnancies->first()->region_code,
@@ -46,7 +49,7 @@ class PhoneOverrideController extends Controller
             ]);
 
         $recentOverrides = AdminOverrideLog::query()
-            ->with(['pregnantUser:id,full_name', 'admin:id,full_name,institution'])
+            ->with(['pregnantUser' => fn ($q) => $q->withTrashed(), 'admin:id,full_name,institution'])
             ->latest('performed_at')
             ->limit(20)
             ->get()
@@ -66,7 +69,9 @@ class PhoneOverrideController extends Controller
             'results' => $results,
             'recentOverrides' => $recentOverrides,
             'metrics' => [
-                'total_mothers' => PregnantUser::count(),
+                'total_mothers' => PregnantUser::withTrashed()->count(),
+                'total_active' => PregnantUser::count(),
+                'total_deleted' => PregnantUser::onlyTrashed()->count(),
                 'total_overrides' => AdminOverrideLog::count(),
             ],
         ]);
@@ -95,5 +100,33 @@ class PhoneOverrideController extends Controller
         });
 
         return redirect()->route('admin.ganti-nomor.index')->with('success', "Nomor HP {$pregnantUser->full_name} berhasil diperbarui menjadi {$data['new_phone_number']}. Log audit UU PDP tercatat.");
+    }
+
+    public function restore(Request $request, $id): RedirectResponse
+    {
+        $pregnantUser = PregnantUser::withTrashed()->findOrFail($id);
+
+        DB::transaction(function () use ($pregnantUser) {
+            $pregnantUser->restore();
+            $pregnantUser->pregnancies()->withTrashed()->restore();
+
+            foreach ($pregnantUser->pregnancies as $preg) {
+                $preg->consents()->update([
+                    'revoked_at' => null,
+                    'data_deletion_requested_at' => null,
+                ]);
+            }
+
+            AdminOverrideLog::create([
+                'admin_id' => Auth::guard('admin')->id(),
+                'pregnant_user_id' => $pregnantUser->id,
+                'old_phone_number' => $pregnantUser->phone_number,
+                'new_phone_number' => $pregnantUser->phone_number,
+                'reason' => 'Pemulihan akun & reaktivasi data ibu hamil (Restore Soft Delete)',
+                'performed_at' => now(),
+            ]);
+        });
+
+        return redirect()->route('admin.ganti-nomor.index')->with('success', "Akun {$pregnantUser->full_name} berhasil dipulihkan dan diaktifkan kembali.");
     }
 }

@@ -19,8 +19,10 @@ return new class extends Migration
             $table->enum('status', ['pending', 'verified', 'rejected'])->default('pending');
             $table->foreignId('verified_by_admin_id')->nullable()->constrained('admin_users')->nullOnDelete();
             $table->timestamp('verified_at')->nullable();
+            $table->text('admin_note')->nullable();
             $table->string('region_code', 20);
             $table->boolean('is_available')->default(true);
+            $table->date('unavailable_from')->nullable();
             $table->date('unavailable_until')->nullable();
             $table->rememberToken();
             $table->timestamps();

@@ -93,7 +93,7 @@ describe('Pregnant User Authentication (OTP WhatsApp)', function () {
         expect(Hash::check('secret1234', $user->password_hash))->toBeTrue();
 
         // Now user can login using password at the login page
-        $loginResponse = $this->post(route('auth.staff.login'), [
+        $loginResponse = $this->withHeaders(['X-Is-Native' => '1'])->post(route('auth.staff.login'), [
             'identifier' => '085730676143',
             'password' => 'secret1234',
         ]);

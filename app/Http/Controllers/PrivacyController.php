@@ -30,7 +30,7 @@ class PrivacyController extends Controller
         $consent = $pregnancy->latestConsent;
         $user = Auth::guard('pregnant')->user();
 
-        return Inertia::render('Kehamilan/Privasi', [
+        return Inertia::render('Mobile/Privacy', [
             'motherName' => $pregnancy->mother_name,
             'consentActive' => $pregnancy->hasActiveConsent(),
             'revokedAt' => $consent?->revoked_at,

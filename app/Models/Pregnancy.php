@@ -122,9 +122,14 @@ class Pregnancy extends Model
     /** Beranda §3.6: usia kehamilan berjalan, bukan snapshot saat registrasi. */
     public function currentGestationalAgeWeeks(): int
     {
-        $weeksElapsed = intdiv($this->created_at->diffInDays(now()), 7);
+        if (! $this->created_at) {
+            return (int) ($this->gestational_age_weeks_at_registration ?? 0);
+        }
 
-        return min(42, $this->gestational_age_weeks_at_registration + $weeksElapsed);
+        $createdAt = is_string($this->created_at) ? \Illuminate\Support\Carbon::parse($this->created_at) : $this->created_at;
+        $weeksElapsed = intdiv($createdAt->diffInDays(now()), 7);
+
+        return min(42, ($this->gestational_age_weeks_at_registration ?? 0) + $weeksElapsed);
     }
 
     public function emergencyAlerts(): HasMany

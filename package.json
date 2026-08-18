@@ -6,6 +6,10 @@
         "build": "vite build",
         "dev": "vite",
         "dev:mobile": "concurrently \"php artisan serve --host=0.0.0.0 --port=8000\" \"npm run dev\"",
+        "cap:sync": "npm run build && npx cap sync android",
+        "cap:run": "npm run build && npx cap sync android && npx cap run android",
+        "cap:run:memu": "adb connect 127.0.0.1:21503 && npm run cap:run",
+        "adb:keepalive:win": "powershell -ExecutionPolicy Bypass -File scripts/adb-keepalive.ps1",
         "assets:generate": "node scripts/generate-assets.js",
         "whatsapp:service": "node scripts/whatsapp-service.cjs",
         "whatsapp:logout": "node scripts/whatsapp-service.cjs --logout"
